@@ -972,6 +972,52 @@ body {
     min-height: 1.2rem;
 }
 
+/* Formulário de Checkout */
+.checkout-form {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+}
+
+.checkout-form .form-group {
+    margin-bottom: 1rem;
+}
+
+.checkout-form .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.checkout-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--dark-purple);
+    font-size: 0.9rem;
+}
+
+.checkout-form input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: var(--white);
+    box-sizing: border-box;
+}
+
+.checkout-form input:focus {
+    outline: none;
+    border-color: var(--coral);
+    box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+}
+
+.checkout-form input::placeholder {
+    color: #999;
+}
+
 /* Admin Panel Updates */
 .admin-header {
     display: flex;
@@ -1233,6 +1279,15 @@ html {
     border-radius: 8px;
     margin-bottom: 0.5rem;
     border-left: 4px solid var(--coral);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.order-customer {
+    font-weight: 600;
+    color: var(--coral);
+    font-size: 0.9rem;
 }
 
 .order-id {

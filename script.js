@@ -452,44 +452,83 @@ function checkout() {
         return;
     }
 
-    // Animação do botão de checkout
+    const checkoutForm = document.getElementById('checkoutForm');
     const checkoutBtn = document.getElementById('checkoutBtn');
+    
+    // Se formulário não está visível, mostrar
+    if (checkoutForm.style.display === 'none') {
+        checkoutForm.style.display = 'block';
+        checkoutBtn.innerHTML = 'Enviar Pedido';
+        checkoutBtn.onclick = processCheckout;
+        return;
+    }
+    
+    // Processar checkout
+    processCheckout();
+}
+
+function processCheckout() {
+    const customerPhone = document.getElementById('customerPhone').value;
+    const customerName = document.getElementById('customerName').value;
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    
+    // Validar campos
+    if (!customerPhone || !customerName) {
+        showNotification('Por favor, preencha todos os campos!', 'error');
+        return;
+    }
+    
+    // Validar telefone
+    const phoneRegex = /^\(?[0-9]{2}\)?[0-9]{4,5}[0-9]{4}$/;
+    if (!phoneRegex.test(customerPhone.replace(/\D/g, ''))) {
+        showNotification('Por favor, digite um telefone válido!', 'error');
+        return;
+    }
+    
+    // Animação do botão
     checkoutBtn.style.transform = 'scale(0.95)';
     checkoutBtn.innerHTML = 'Enviando...';
+    checkoutBtn.disabled = true;
     
     setTimeout(() => {
         // Gerar mensagem de confirmação do restaurante
-        const confirmationMessage = generateRestaurantConfirmationMessage();
+        const confirmationMessage = generateRestaurantConfirmationMessage(customerName);
         
         // Salvar pedido no localStorage para acompanhamento
         const orderId = generateOrderId();
-        saveOrderToLocalStorage();
+        saveOrderToLocalStorage(customerName, customerPhone);
         
         // Notificar administrador
         notifyAdmin({
             id: orderId,
             total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            customer: { name: customerName, phone: customerPhone }
         });
         
-        // Mostrar instruções para o cliente
-        showNotification('Pedido registrado! Aguarde nossa confirmação via WhatsApp.', 'success');
+        // Enviar mensagem real para WhatsApp
+        sendWhatsAppMessage(customerPhone, confirmationMessage);
         
-        // Simular envio automático da confirmação (em produção seria via API)
-        setTimeout(() => {
-            showNotification('✅ Confirmação enviada via WhatsApp!', 'success');
-        }, 2000);
+        // Mostrar confirmação
+        showNotification('✅ Pedido enviado! Confirmação enviada via WhatsApp!', 'success');
         
+        // Limpar carrinho e fechar
+        cart = [];
+        updateCartDisplay();
         closeCart();
+        
+        // Resetar formulário
+        document.getElementById('customerPhone').value = '';
+        document.getElementById('customerName').value = '';
+        document.getElementById('checkoutForm').style.display = 'none';
         
         // Resetar botão
         checkoutBtn.style.transform = 'scale(1)';
         checkoutBtn.innerHTML = 'Finalizar Pedido';
+        checkoutBtn.disabled = false;
+        checkoutBtn.onclick = checkout;
         
-        // Mostrar mensagem que seria enviada (para demonstração)
-        showConfirmationMessage(confirmationMessage);
-        
-    }, 500);
+    }, 1000);
 }
 
 // Mostrar mensagem de confirmação que seria enviada
@@ -545,8 +584,21 @@ function showConfirmationMessage(message) {
     });
 }
 
+// Enviar mensagem real para WhatsApp
+function sendWhatsAppMessage(phone, message) {
+    // Limpar e formatar telefone
+    const cleanPhone = phone.replace(/\D/g, '');
+    const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : '55' + cleanPhone;
+    
+    // Criar URL do WhatsApp
+    const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+    
+    // Abrir WhatsApp
+    window.open(whatsappUrl, '_blank');
+}
+
 // Gerar mensagem de confirmação do restaurante para o cliente
-function generateRestaurantConfirmationMessage() {
+function generateRestaurantConfirmationMessage(customerName) {
     const now = new Date();
     const orderId = generateOrderId();
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -559,7 +611,7 @@ function generateRestaurantConfirmationMessage() {
     
     let message = '🍣 *FRY - Sushi Delivery* 🍣\n\n';
     message += '✅ *PEDIDO CONFIRMADO!*\n\n';
-    message += 'Olá! Recebemos seu pedido e já estamos preparando com carinho! 🍱\n\n';
+    message += `Olá ${customerName}! Recebemos seu pedido e já estamos preparando com carinho! 🍱\n\n`;
     
     message += `📋 *PEDIDO #${orderId}*\n`;
     message += `🕐 ${now.toLocaleString('pt-BR')}\n\n`;
@@ -604,17 +656,21 @@ function generateOrderId() {
 }
 
 // Salvar pedido no localStorage para acompanhamento
-function saveOrderToLocalStorage() {
+function saveOrderToLocalStorage(customerName, customerPhone) {
     const order = {
         id: generateOrderId(),
         timestamp: new Date().toISOString(),
         items: [...cart],
         total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        status: 'pending'
+        status: 'pending',
+        customer: {
+            name: customerName,
+            phone: customerPhone
+        }
     };
     
     const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
-    orders.push(order);
+    orders.unshift(order);
     localStorage.setItem('fryOrders', JSON.stringify(orders));
     
     // Notificar administrador
@@ -824,6 +880,7 @@ function loadRecentOrders() {
     recentOrdersEl.innerHTML = recentOrders.map(order => `
         <div class="order-item">
             <div class="order-id">Pedido #${order.id}</div>
+            <div class="order-customer">${order.customer ? order.customer.name : 'Cliente'}</div>
             <div class="order-total">R$ ${order.total.toFixed(2).replace('.', ',')}</div>
             <div class="order-time">${new Date(order.timestamp).toLocaleString('pt-BR')}</div>
         </div>
