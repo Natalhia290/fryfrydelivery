@@ -529,12 +529,17 @@
                 const ordersRef = db.collection('orders');
                 const querySnapshot = await ordersRef.orderBy('timestamp', 'desc').get();
                 
-                orders = [];
+                const loadedOrders = [];
                 querySnapshot.forEach((doc) => {
-                    orders.push(doc.data());
+                    loadedOrders.push(doc.data());
                 });
                 
-                console.log(`✅ ${orders.length} pedidos carregados`);
+                // Remover duplicatas baseado no ID do pedido
+                orders = loadedOrders.filter((order, index, self) => 
+                    index === self.findIndex(o => o.id === order.id)
+                );
+                
+                console.log(`✅ ${orders.length} pedidos únicos carregados`);
                 updateStats();
                 renderOrders();
                 
@@ -573,9 +578,16 @@
                 return;
             }
             
-            let filteredOrders = orders;
+            // Remover duplicatas baseado no ID do pedido
+            const uniqueOrders = orders.filter((order, index, self) => 
+                index === self.findIndex(o => o.id === order.id)
+            );
+            
+            console.log('🎨 Renderizando pedidos únicos:', uniqueOrders.length);
+            
+            let filteredOrders = uniqueOrders;
             if (currentFilter !== 'all') {
-                filteredOrders = orders.filter(order => order.status === currentFilter);
+                filteredOrders = uniqueOrders.filter(order => order.status === currentFilter);
             }
             
             if (filteredOrders.length === 0) {
@@ -803,10 +815,22 @@
                             newOrders.push(doc.data());
                         });
                         
-                        // Verificar se houve mudanças
-                        if (newOrders.length !== orders.length || 
-                            JSON.stringify(newOrders) !== JSON.stringify(orders)) {
-                            console.log('🔄 Novos pedidos detectados!');
+                        // Verificar se houve mudanças de forma mais eficiente
+                        const hasChanges = newOrders.length !== orders.length || 
+                            newOrders.some((newOrder, index) => {
+                                const oldOrder = orders[index];
+                                return !oldOrder || 
+                                       newOrder.id !== oldOrder.id || 
+                                       newOrder.updatedAt !== oldOrder.updatedAt ||
+                                       newOrder.status !== oldOrder.status;
+                            });
+                        
+                        if (hasChanges) {
+                            console.log('🔄 Mudanças detectadas nos pedidos!');
+                            console.log('📊 Pedidos antigos:', orders.length);
+                            console.log('📊 Pedidos novos:', newOrders.length);
+                            
+                            // Atualizar lista de pedidos
                             orders = newOrders;
                             updateStats();
                             renderOrders();
