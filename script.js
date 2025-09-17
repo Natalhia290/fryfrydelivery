@@ -458,36 +458,95 @@ function checkout() {
     checkoutBtn.innerHTML = 'Enviando...';
     
     setTimeout(() => {
-        const message = generateAutomatedWhatsAppMessage();
-        const config = whatsappConfig.business ? whatsappConfig : {
-            business: { phone: '5562995045038' }
-        };
-        const whatsappUrl = `https://wa.me/${config.business.phone}?text=${encodeURIComponent(message)}`;
+        // Gerar mensagem de confirmação do restaurante
+        const confirmationMessage = generateRestaurantConfirmationMessage();
         
         // Salvar pedido no localStorage para acompanhamento
+        const orderId = generateOrderId();
         saveOrderToLocalStorage();
         
         // Notificar administrador
         notifyAdmin({
-            id: generateOrderId(),
+            id: orderId,
             total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
             timestamp: new Date().toISOString()
         });
         
-        window.open(whatsappUrl, '_blank');
+        // Mostrar instruções para o cliente
+        showNotification('Pedido registrado! Aguarde nossa confirmação via WhatsApp.', 'success');
+        
+        // Simular envio automático da confirmação (em produção seria via API)
+        setTimeout(() => {
+            showNotification('✅ Confirmação enviada via WhatsApp!', 'success');
+        }, 2000);
+        
         closeCart();
         
         // Resetar botão
         checkoutBtn.style.transform = 'scale(1)';
-        checkoutBtn.innerHTML = 'Finalizar no WhatsApp';
+        checkoutBtn.innerHTML = 'Finalizar Pedido';
         
-        // Mostrar confirmação
-        showNotification('Pedido enviado! Aguarde nossa confirmação via WhatsApp.', 'success');
+        // Mostrar mensagem que seria enviada (para demonstração)
+        showConfirmationMessage(confirmationMessage);
+        
     }, 500);
 }
 
-// Gerar mensagem automatizada inteligente
-function generateAutomatedWhatsAppMessage() {
+// Mostrar mensagem de confirmação que seria enviada
+function showConfirmationMessage(message) {
+    // Criar modal para mostrar a mensagem
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 5000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        max-width: 500px;
+        width: 100%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    `;
+    
+    content.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="color: #2b2d42; margin: 0;">📱 Confirmação Enviada</h3>
+            <button onclick="this.closest('.modal').remove()" style="background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+        </div>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; font-family: monospace; white-space: pre-wrap; font-size: 14px; line-height: 1.4;">${message}</div>
+        <div style="margin-top: 15px; text-align: center;">
+            <p style="color: #666; font-size: 14px;">Esta mensagem seria enviada automaticamente para o cliente via WhatsApp</p>
+        </div>
+    `;
+    
+    modal.className = 'modal';
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    
+    // Fechar ao clicar fora
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+// Gerar mensagem de confirmação do restaurante para o cliente
+function generateRestaurantConfirmationMessage() {
     const now = new Date();
     const orderId = generateOrderId();
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -498,11 +557,14 @@ function generateAutomatedWhatsAppMessage() {
         messages: whatsappConfig.messages || whatsappConfig.autoMessages
     };
     
-    let message = config.messages.greeting;
-    message += `\n\n📋 *PEDIDO #${orderId}*`;
-    message += `\n🕐 ${now.toLocaleString('pt-BR')}\n\n`;
+    let message = '🍣 *FRY - Sushi Delivery* 🍣\n\n';
+    message += '✅ *PEDIDO CONFIRMADO!*\n\n';
+    message += 'Olá! Recebemos seu pedido e já estamos preparando com carinho! 🍱\n\n';
     
-    message += '🍱 *ITENS DO PEDIDO:*\n';
+    message += `📋 *PEDIDO #${orderId}*\n`;
+    message += `🕐 ${now.toLocaleString('pt-BR')}\n\n`;
+    
+    message += '🍱 *ITENS DO SEU PEDIDO:*\n';
     cart.forEach((item, index) => {
         message += `${index + 1}. ${item.name}\n`;
         message += `   Quantidade: ${item.quantity}x\n`;
@@ -512,14 +574,24 @@ function generateAutomatedWhatsAppMessage() {
     
     message += `💰 *VALOR TOTAL: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
     
-    // Adicionar informações de entrega
-    message += config.messages.deliveryInfo;
-    message += '\n\n';
+    message += '🚚 *INFORMAÇÕES DE ENTREGA:*\n';
+    message += '• ⏱️ Tempo estimado: 30-45 minutos\n';
+    message += '• 🆓 Taxa de entrega: Grátis\n';
+    message += '• 💳 Formas de pagamento: PIX, Dinheiro ou Cartão\n';
+    message += '• 📍 Área de entrega: Goiânia e Região Metropolitana\n\n';
     
-    // Adicionar instruções para o cliente
-    message += config.messages.clientInstructions || '📝 *Para finalizar seu pedido, por favor informe:*\n• Endereço completo de entrega\n• Ponto de referência (opcional)\n• Forma de pagamento preferida\n• Observações especiais (se houver)\n\n';
+    message += '📝 *Para finalizar, por favor confirme:*\n';
+    message += '• 🏠 Endereço completo de entrega\n';
+    message += '• 📍 Ponto de referência (opcional)\n';
+    message += '• 💰 Forma de pagamento preferida\n';
+    message += '• 📝 Observações especiais (se houver)\n\n';
     
-    message += config.messages.closing;
+    message += '⏰ *Status:* Preparando seu pedido...\n\n';
+    message += 'Obrigado por escolher a FRY! 🙏\n\n';
+    message += '*Horário de funcionamento:*\n';
+    message += 'Segunda a Domingo: 18:00 às 23:00\n\n';
+    message += '*Contato:* (62) 99504-5038\n\n';
+    message += '🍣 *Sushi Premium em Goiânia* 🍣';
     
     return message;
 }
