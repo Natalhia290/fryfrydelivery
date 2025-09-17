@@ -237,6 +237,20 @@
             <div class="recent-orders" id="recentOrders">
                 <!-- Pedidos recentes serão inseridos aqui -->
             </div>
+            
+            <!-- Seção de Gerenciamento de Imagens -->
+            <div class="image-management">
+                <h4>📸 Gerenciar Imagens</h4>
+                <div class="image-upload-section">
+                    <select id="productSelect" class="product-select">
+                        <option value="">Selecione um produto</option>
+                    </select>
+                    <input type="file" id="imageUpload" accept="image/*" class="image-upload-input">
+                    <button id="uploadImageBtn" class="upload-btn">Upload Imagem</button>
+                </div>
+                <div class="image-preview" id="imagePreview"></div>
+            </div>
+            
             <button class="admin-close" id="adminClose">Fechar</button>
         </div>
     </div>

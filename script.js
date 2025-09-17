@@ -7,8 +7,17 @@ const authConfig = {
 let isAuthenticated = false;
 let sessionTimeout = null;
 
+// Sistema de Gerenciamento de Imagens
+let productImages = {}; // Armazenar imagens base64 por ID do produto
+
 // Função para obter imagem do produto
 function getProductImage(product) {
+    // Primeiro verifica se há imagem base64 personalizada
+    if (productImages[product.id]) {
+        return productImages[product.id];
+    }
+    
+    // Fallback para imagens padrão
     const imageMap = {
         // Big Hots
         1: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd1871?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Tilápia
@@ -1356,6 +1365,9 @@ async function initializeApp() {
     // Inicializar painel admin
     initializeAdminPanel();
     
+    // Inicializar sistema de imagens
+    initializeImageManagement();
+    
     // Solicitar permissão para notificações
     requestNotificationPermission();
     
@@ -1372,6 +1384,161 @@ async function initializeApp() {
 // Função para adicionar produto ao carrinho (global)
 window.addToCart = addToCart;
 window.updateQuantity = updateQuantity;
+
+// Sistema de Gerenciamento de Imagens
+function initializeImageManagement() {
+    populateProductSelect();
+    setupImageUpload();
+    loadImagesFromFirebase();
+}
+
+function populateProductSelect() {
+    const productSelect = document.getElementById('productSelect');
+    if (!productSelect) return;
+    
+    // Limpar opções existentes
+    productSelect.innerHTML = '<option value="">Selecione um produto</option>';
+    
+    // Adicionar todos os produtos
+    Object.values(menuData).flat().forEach(product => {
+        const option = document.createElement('option');
+        option.value = product.id;
+        option.textContent = `${product.name} - R$ ${product.price.toFixed(2).replace('.', ',')}`;
+        productSelect.appendChild(option);
+    });
+}
+
+function setupImageUpload() {
+    const imageUpload = document.getElementById('imageUpload');
+    const uploadBtn = document.getElementById('uploadImageBtn');
+    const productSelect = document.getElementById('productSelect');
+    
+    if (!imageUpload || !uploadBtn || !productSelect) return;
+    
+    // Preview da imagem
+    imageUpload.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                showImagePreview(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Upload da imagem
+    uploadBtn.addEventListener('click', function() {
+        const productId = parseInt(productSelect.value);
+        const file = imageUpload.files[0];
+        
+        if (!productId) {
+            showUploadStatus('Selecione um produto', 'error');
+            return;
+        }
+        
+        if (!file) {
+            showUploadStatus('Selecione uma imagem', 'error');
+            return;
+        }
+        
+        uploadImage(productId, file);
+    });
+}
+
+function showImagePreview(imageSrc) {
+    const preview = document.getElementById('imagePreview');
+    if (!preview) return;
+    
+    preview.innerHTML = `
+        <img src="${imageSrc}" alt="Preview">
+        <div class="upload-status" id="uploadStatus"></div>
+    `;
+}
+
+function uploadImage(productId, file) {
+    const uploadBtn = document.getElementById('uploadImageBtn');
+    const uploadStatus = document.getElementById('uploadStatus');
+    
+    // Validar tamanho do arquivo (máximo 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+        showUploadStatus('Imagem muito grande. Máximo 2MB.', 'error');
+        return;
+    }
+    
+    // Validar tipo de arquivo
+    if (!file.type.startsWith('image/')) {
+        showUploadStatus('Selecione apenas arquivos de imagem.', 'error');
+        return;
+    }
+    
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = 'Processando...';
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64Image = e.target.result;
+        
+        // Salvar imagem localmente
+        productImages[productId] = base64Image;
+        
+        // Salvar no Firebase
+        saveImageToFirebase(productId, base64Image)
+            .then(() => {
+                showUploadStatus('Imagem salva com sucesso!', 'success');
+                // Atualizar o cardápio se estiver visível
+                if (document.getElementById('menuGrid')) {
+                    renderMenu();
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao salvar imagem:', error);
+                showUploadStatus('Erro ao salvar imagem. Tente novamente.', 'error');
+            })
+            .finally(() => {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload Imagem';
+            });
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+function saveImageToFirebase(productId, base64Image) {
+    return new Promise((resolve, reject) => {
+        // Simular salvamento no Firebase
+        // Em uma implementação real, você usaria o Firebase SDK
+        setTimeout(() => {
+            // Salvar no localStorage como fallback
+            localStorage.setItem(`product_image_${productId}`, base64Image);
+            resolve();
+        }, 1000);
+    });
+}
+
+function loadImagesFromFirebase() {
+    // Carregar imagens salvas do localStorage
+    Object.values(menuData).flat().forEach(product => {
+        const savedImage = localStorage.getItem(`product_image_${product.id}`);
+        if (savedImage) {
+            productImages[product.id] = savedImage;
+        }
+    });
+}
+
+function showUploadStatus(message, type) {
+    const status = document.getElementById('uploadStatus');
+    if (status) {
+        status.textContent = message;
+        status.className = `upload-status ${type}`;
+        
+        // Limpar status após 3 segundos
+        setTimeout(() => {
+            status.textContent = '';
+            status.className = 'upload-status';
+        }, 3000);
+    }
+}
 
 // Inicializar quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', initializeApp);
