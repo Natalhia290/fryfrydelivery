@@ -432,12 +432,14 @@ function closeCart() {
 }
 
 // Sistema de automação do WhatsApp
-const whatsappConfig = {
-    phone: '5562995045038',
-    businessName: 'FRY - Sushi Delivery',
-    autoMessages: {
+// Usar a configuração avançada do whatsapp-config.js
+const whatsappConfig = window.whatsappBusinessConfig || {
+    business: {
+        phone: '5562995045038',
+        name: 'FRY - Sushi Delivery'
+    },
+    messages: {
         greeting: '🍣 *FRY - Sushi Delivery* 🍣\n\nOlá! Bem-vindo(a) ao nosso delivery de sushi premium em Goiânia! 🎉',
-        orderConfirmation: '✅ *Pedido Confirmado!*\n\nSeu pedido foi recebido e está sendo preparado com carinho! 🍱',
         deliveryInfo: '🚚 *Informações de Entrega:*\n• Tempo estimado: 30-45 minutos\n• Taxa de entrega: Grátis\n• Forma de pagamento: PIX, Dinheiro ou Cartão',
         closing: 'Obrigado por escolher a FRY! 🙏\n\n*Horário de funcionamento:*\nSegunda a Domingo: 18:00 às 23:00'
     }
@@ -457,10 +459,20 @@ function checkout() {
     
     setTimeout(() => {
         const message = generateAutomatedWhatsAppMessage();
-        const whatsappUrl = `https://wa.me/${whatsappConfig.phone}?text=${encodeURIComponent(message)}`;
+        const config = whatsappConfig.business ? whatsappConfig : {
+            business: { phone: '5562995045038' }
+        };
+        const whatsappUrl = `https://wa.me/${config.business.phone}?text=${encodeURIComponent(message)}`;
         
         // Salvar pedido no localStorage para acompanhamento
         saveOrderToLocalStorage();
+        
+        // Notificar administrador
+        notifyAdmin({
+            id: generateOrderId(),
+            total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+            timestamp: new Date().toISOString()
+        });
         
         window.open(whatsappUrl, '_blank');
         closeCart();
@@ -480,7 +492,13 @@ function generateAutomatedWhatsAppMessage() {
     const orderId = generateOrderId();
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    let message = whatsappConfig.autoMessages.greeting;
+    // Usar configuração avançada se disponível
+    const config = whatsappConfig.business ? whatsappConfig : {
+        business: { phone: '5562995045038', name: 'FRY - Sushi Delivery' },
+        messages: whatsappConfig.messages || whatsappConfig.autoMessages
+    };
+    
+    let message = config.messages.greeting;
     message += `\n\n📋 *PEDIDO #${orderId}*`;
     message += `\n🕐 ${now.toLocaleString('pt-BR')}\n\n`;
     
@@ -495,17 +513,13 @@ function generateAutomatedWhatsAppMessage() {
     message += `💰 *VALOR TOTAL: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
     
     // Adicionar informações de entrega
-    message += whatsappConfig.autoMessages.deliveryInfo;
+    message += config.messages.deliveryInfo;
     message += '\n\n';
     
     // Adicionar instruções para o cliente
-    message += '📝 *Para finalizar seu pedido, por favor informe:*\n';
-    message += '• Endereço completo de entrega\n';
-    message += '• Ponto de referência (opcional)\n';
-    message += '• Forma de pagamento preferida\n';
-    message += '• Observações especiais (se houver)\n\n';
+    message += config.messages.clientInstructions || '📝 *Para finalizar seu pedido, por favor informe:*\n• Endereço completo de entrega\n• Ponto de referência (opcional)\n• Forma de pagamento preferida\n• Observações especiais (se houver)\n\n';
     
-    message += whatsappConfig.autoMessages.closing;
+    message += config.messages.closing;
     
     return message;
 }
