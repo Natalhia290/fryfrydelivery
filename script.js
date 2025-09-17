@@ -22,7 +22,7 @@ const firebaseConfig = {
 };
 
 // Inicializar Firebase
-let db;
+let db = null;
 try {
     // Verificar se Firebase está disponível
     if (typeof firebase !== 'undefined') {
@@ -298,6 +298,7 @@ function setupEventListeners() {
 
 // Renderização do menu com animações dinâmicas
 function renderMenu() {
+    console.log('renderMenu chamada');
     const menuGridElement = document.getElementById('menuGrid');
     
     if (!menuGridElement) {
@@ -305,10 +306,13 @@ function renderMenu() {
         return;
     }
     
+    console.log('menuGrid encontrado, renderizando menu...');
+    
     // Adicionar efeito de loading
     menuGridElement.innerHTML = '<div class="loading-spinner">Carregando cardápio...</div>';
     
     setTimeout(() => {
+        console.log('Iniciando renderização dos produtos...');
         menuGridElement.innerHTML = '';
         
         let productsToShow = [];
@@ -322,8 +326,10 @@ function renderMenu() {
         }
 
         console.log('Produtos para mostrar:', productsToShow.length);
+        console.log('menuData:', menuData);
 
         productsToShow.forEach((product, index) => {
+            console.log('Criando elemento para produto:', product.name);
             const productElement = createProductElement(product, index);
             menuGridElement.appendChild(productElement);
             
@@ -333,6 +339,8 @@ function renderMenu() {
                 productElement.style.transform = 'translateY(0)';
             }, index * 100);
         });
+        
+        console.log('Menu renderizado com sucesso!');
     }, 300);
 }
 
@@ -563,7 +571,6 @@ const whatsappConfig = window.whatsappBusinessConfig || {
 };
 
 // Configuração do Firebase (será carregada dinamicamente)
-let db = null;
 let firebaseInitialized = false;
 
 // Inicializar Firebase
@@ -1305,26 +1312,31 @@ function hideAdminPanel() {
 }
 
 // Inicialização da aplicação
-async function initializeApp() {
+function initializeApp() {
     console.log('Iniciando aplicação...');
     
     // Verificar se elementos existem
     const menuGrid = document.getElementById('menuGrid');
     const loginForm = document.getElementById('loginForm');
+    const adminToggle = document.getElementById('adminToggle');
     
     console.log('menuGrid encontrado:', !!menuGrid);
     console.log('loginForm encontrado:', !!loginForm);
+    console.log('adminToggle encontrado:', !!adminToggle);
     
-    // Renderizar menu primeiro (sem depender do Firebase)
-    renderMenu();
-    
-    // Inicializar Firebase em background
-    try {
-        await initializeFirebase();
-        console.log('Firebase inicializado com sucesso');
-    } catch (error) {
-        console.log('Firebase não disponível, usando localStorage');
+    // Renderizar menu primeiro
+    if (menuGrid) {
+        renderMenu();
+    } else {
+        console.error('menuGrid não encontrado!');
     }
+    
+    // Inicializar Firebase em background (sem await)
+    initializeFirebase().then(() => {
+        console.log('Firebase inicializado com sucesso');
+    }).catch(error => {
+        console.log('Firebase não disponível, usando localStorage');
+    });
     
     // Verificar sessão existente
     checkSession();
