@@ -18,22 +18,26 @@ img {
 
 :root {
     --coral: #ff6b6b;
-    --dark-purple: #2b2d42;
+    --dark-purple: #1a1a2e;
     --white: #fff;
-    --soft-black: #222;
-    --light-gray: #f8f9fa;
-    --border-color: #e9ecef;
-    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.15);
+    --soft-black: #0f0f0f;
+    --light-gray: #1a1a1a;
+    --border-color: #333;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.4);
     --transition: all 0.3s ease;
+    --text-light: #e0e0e0;
+    --text-muted: #a0a0a0;
 }
 
 body {
     font-family: 'Poppins', sans-serif;
     line-height: 1.6;
-    color: var(--soft-black);
-    background-color: var(--white);
+    color: var(--text-light);
+    background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80') center/cover fixed;
     overflow-x: hidden;
+    min-height: 100vh;
 }
 
 .container {
@@ -48,10 +52,12 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    background: var(--white);
+    background: rgba(26, 26, 46, 0.95);
+    backdrop-filter: blur(10px);
     box-shadow: var(--shadow);
     z-index: 1000;
     transition: var(--transition);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .header-content {
@@ -89,7 +95,7 @@ body {
 
 .nav-link {
     text-decoration: none;
-    color: var(--soft-black);
+    color: var(--text-light);
     font-weight: 500;
     transition: var(--transition);
     position: relative;
@@ -120,7 +126,7 @@ body {
     padding: 0.5rem;
     border-radius: 50%;
     transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    color: var(--soft-black);
+    color: var(--text-light);
 }
 
 .cart-icon:hover {
@@ -174,7 +180,7 @@ body {
 .mobile-menu-btn span {
     width: 25px;
     height: 3px;
-    background: var(--soft-black);
+    background: var(--text-light);
     margin: 3px 0;
     transition: var(--transition);
 }
@@ -199,7 +205,8 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, #ff6b6b 0%, #2b2d42 50%, #1a1a2e 100%);
+    background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.6)), 
+                url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80') center/cover;
     z-index: -1;
     overflow: hidden;
 }
@@ -454,7 +461,7 @@ body {
     font-weight: 600;
     text-align: center;
     margin-bottom: 3rem;
-    color: var(--soft-black);
+    color: var(--text-light);
     position: relative;
     padding-top: 2rem;
 }
@@ -474,9 +481,10 @@ body {
 /* Cardápio */
 .menu {
     padding: 8rem 0 6rem 0;
-    background: var(--light-gray);
+    background: rgba(26, 26, 46, 0.9);
     position: relative;
     z-index: 1;
+    backdrop-filter: blur(10px);
 }
 
 .menu-filters {
@@ -488,9 +496,9 @@ body {
 }
 
 .filter-btn {
-    background: var(--white);
+    background: rgba(255, 255, 255, 0.1);
     border: 2px solid var(--border-color);
-    color: var(--soft-black);
+    color: var(--text-light);
     padding: 0.8rem 1.5rem;
     border-radius: 25px;
     cursor: pointer;
@@ -498,6 +506,7 @@ body {
     font-weight: 500;
     position: relative;
     overflow: hidden;
+    backdrop-filter: blur(10px);
 }
 
 .filter-btn::before {
@@ -541,7 +550,7 @@ body {
 }
 
 .menu-item {
-    background: var(--white);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 15px;
     overflow: hidden;
     box-shadow: var(--shadow);
@@ -550,6 +559,8 @@ body {
     animation: fadeInUp 0.6s ease-out forwards;
     position: relative;
     cursor: pointer;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .menu-item::before {
@@ -620,11 +631,11 @@ body {
     font-size: 1.3rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
-    color: var(--soft-black);
+    color: var(--text-light);
 }
 
 .menu-item-description {
-    color: #666;
+    color: var(--text-muted);
     margin-bottom: 1rem;
     line-height: 1.5;
 }
@@ -691,9 +702,10 @@ body {
 /* Seção Sobre */
 .about {
     padding: 8rem 0 6rem 0;
-    background: var(--white);
+    background: rgba(15, 15, 15, 0.9);
     position: relative;
     z-index: 1;
+    backdrop-filter: blur(10px);
 }
 
 .about-content {
@@ -760,9 +772,10 @@ body {
 /* Seção Contato */
 .contact {
     padding: 8rem 0 6rem 0;
-    background: var(--light-gray);
+    background: rgba(26, 26, 46, 0.9);
     position: relative;
     z-index: 1;
+    backdrop-filter: blur(10px);
 }
 
 .contact-content {
@@ -780,11 +793,11 @@ body {
     font-size: 1.3rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
-    color: var(--soft-black);
+    color: var(--text-light);
 }
 
 .contact-item p {
-    color: #666;
+    color: var(--text-muted);
     line-height: 1.6;
 }
 
@@ -847,10 +860,30 @@ body {
 
 /* Footer */
 .footer {
-    background: var(--dark-purple);
-    color: var(--white);
+    background: rgba(15, 15, 15, 0.95);
+    color: var(--text-light);
     text-align: center;
     padding: 2rem 0;
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border-color);
+}
+
+.developer-credit {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.developer-credit a {
+    color: var(--coral);
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.developer-credit a:hover {
+    color: var(--white);
+    text-decoration: underline;
 }
 
 /* Modal do Carrinho */
@@ -884,12 +917,14 @@ body {
     top: 0;
     bottom: 0;
     width: 400px;
-    background: var(--white);
-    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
+    background: rgba(26, 26, 46, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;
     transform: translateX(100%);
     transition: var(--transition);
+    border-left: 1px solid var(--border-color);
 }
 
 .cart-modal.active .cart-sidebar {
@@ -907,7 +942,7 @@ body {
 .cart-header h3 {
     font-size: 1.5rem;
     font-weight: 600;
-    color: var(--soft-black);
+    color: var(--text-light);
 }
 
 .cart-close {
@@ -1002,7 +1037,7 @@ body {
 .cart-total {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--soft-black);
+    color: var(--text-light);
     margin-bottom: 1rem;
     text-align: center;
 }
