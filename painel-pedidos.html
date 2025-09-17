@@ -422,6 +422,7 @@
             <button class="filter-btn" data-filter="saiu-entrega">Saiu para Entrega</button>
             <button class="filter-btn" data-filter="entregue">Entregues</button>
             <button class="filter-btn reset-btn" onclick="resetAllOrders()" style="background: #ff4444; border-color: #ff4444;">🗑️ Resetar Todos</button>
+            <button class="filter-btn" onclick="cleanDuplicates()" style="background: #ff9800; border-color: #ff9800;">🧹 Limpar Duplicatas</button>
         </div>
 
         <div class="orders-container">
@@ -495,6 +496,58 @@
             }
         }
 
+        // Função para limpar duplicatas do Firebase (caso existam)
+        async function cleanDuplicates() {
+            if (!firebaseInitialized || !db) {
+                console.log('Firebase não inicializado para limpeza');
+                return;
+            }
+
+            try {
+                console.log('🧹 Verificando duplicatas no Firebase...');
+                
+                const ordersRef = db.collection('orders');
+                const querySnapshot = await ordersRef.get();
+                
+                const orderMap = new Map();
+                const duplicates = [];
+                
+                querySnapshot.forEach((doc) => {
+                    const order = doc.data();
+                    if (order.id) {
+                        if (orderMap.has(order.id)) {
+                            // Encontrou duplicata
+                            duplicates.push(doc.id);
+                            console.log('🗑️ Duplicata encontrada:', order.id, 'Doc ID:', doc.id);
+                        } else {
+                            orderMap.set(order.id, doc.id);
+                        }
+                    }
+                });
+                
+                if (duplicates.length > 0) {
+                    console.log(`🧹 Removendo ${duplicates.length} duplicatas...`);
+                    
+                    const batch = db.batch();
+                    duplicates.forEach(docId => {
+                        const docRef = ordersRef.doc(docId);
+                        batch.delete(docRef);
+                    });
+                    
+                    await batch.commit();
+                    console.log('✅ Duplicatas removidas com sucesso!');
+                    
+                    // Recarregar pedidos após limpeza
+                    await loadOrders();
+                } else {
+                    console.log('✅ Nenhuma duplicata encontrada no Firebase');
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro ao limpar duplicatas:', error);
+            }
+        }
+
         // Inicializar Firebase
         async function initializeFirebase() {
             try {
@@ -534,12 +587,19 @@
                     loadedOrders.push(doc.data());
                 });
                 
-                // Remover duplicatas baseado no ID do pedido
-                orders = loadedOrders.filter((order, index, self) => 
-                    index === self.findIndex(o => o.id === order.id)
-                );
+                // Usar Map para garantir unicidade baseada no ID
+                const orderMap = new Map();
+                loadedOrders.forEach(order => {
+                    if (order.id && !orderMap.has(order.id)) {
+                        orderMap.set(order.id, order);
+                    }
+                });
                 
-                console.log(`✅ ${orders.length} pedidos únicos carregados`);
+                orders = Array.from(orderMap.values());
+                
+                console.log(`✅ ${orders.length} pedidos únicos carregados do Firebase`);
+                console.log('📋 IDs carregados:', orders.map(o => o.id));
+                
                 updateStats();
                 renderOrders();
                 
@@ -578,12 +638,18 @@
                 return;
             }
             
-            // Remover duplicatas baseado no ID do pedido
-            const uniqueOrders = orders.filter((order, index, self) => 
-                index === self.findIndex(o => o.id === order.id)
-            );
+            // Garantir que não há duplicatas - usar Map para eliminar duplicatas
+            const orderMap = new Map();
+            orders.forEach(order => {
+                if (order.id && !orderMap.has(order.id)) {
+                    orderMap.set(order.id, order);
+                }
+            });
+            
+            const uniqueOrders = Array.from(orderMap.values());
             
             console.log('🎨 Renderizando pedidos únicos:', uniqueOrders.length);
+            console.log('📋 IDs dos pedidos:', uniqueOrders.map(o => o.id));
             
             let filteredOrders = uniqueOrders;
             if (currentFilter !== 'all') {
@@ -815,23 +881,47 @@
                             newOrders.push(doc.data());
                         });
                         
-                        // Verificar se houve mudanças de forma mais eficiente
-                        const hasChanges = newOrders.length !== orders.length || 
-                            newOrders.some((newOrder, index) => {
-                                const oldOrder = orders[index];
-                                return !oldOrder || 
-                                       newOrder.id !== oldOrder.id || 
-                                       newOrder.updatedAt !== oldOrder.updatedAt ||
-                                       newOrder.status !== oldOrder.status;
-                            });
+                        // Remover duplicatas baseado no ID
+                        const uniqueNewOrders = newOrders.filter((order, index, self) => 
+                            index === self.findIndex(o => o.id === order.id)
+                        );
+                        
+                        // Criar mapas para comparação eficiente
+                        const currentOrderMap = new Map(orders.map(order => [order.id, order]));
+                        const newOrderMap = new Map(uniqueNewOrders.map(order => [order.id, order]));
+                        
+                        // Verificar se houve mudanças reais
+                        let hasChanges = false;
+                        
+                        // Verificar se o número de pedidos mudou
+                        if (uniqueNewOrders.length !== orders.length) {
+                            hasChanges = true;
+                            console.log('📊 Número de pedidos mudou:', orders.length, '->', uniqueNewOrders.length);
+                        }
+                        
+                        // Verificar se algum pedido foi adicionado, removido ou modificado
+                        for (const [id, newOrder] of newOrderMap) {
+                            const oldOrder = currentOrderMap.get(id);
+                            if (!oldOrder) {
+                                hasChanges = true;
+                                console.log('➕ Novo pedido:', id);
+                            } else if (oldOrder.updatedAt !== newOrder.updatedAt || oldOrder.status !== newOrder.status) {
+                                hasChanges = true;
+                                console.log('🔄 Pedido atualizado:', id);
+                            }
+                        }
+                        
+                        // Verificar se algum pedido foi removido
+                        for (const [id, oldOrder] of currentOrderMap) {
+                            if (!newOrderMap.has(id)) {
+                                hasChanges = true;
+                                console.log('➖ Pedido removido:', id);
+                            }
+                        }
                         
                         if (hasChanges) {
-                            console.log('🔄 Mudanças detectadas nos pedidos!');
-                            console.log('📊 Pedidos antigos:', orders.length);
-                            console.log('📊 Pedidos novos:', newOrders.length);
-                            
-                            // Atualizar lista de pedidos
-                            orders = newOrders;
+                            console.log('🔄 Atualizando lista de pedidos...');
+                            orders = uniqueNewOrders;
                             updateStats();
                             renderOrders();
                         }
@@ -839,7 +929,7 @@
                         console.error('❌ Erro na atualização em tempo real:', error);
                     }
                 }
-            }, 3000); // Verificar a cada 3 segundos
+            }, 5000); // Verificar a cada 5 segundos (menos frequente)
         }
 
         // Inicializar aplicação
@@ -851,6 +941,10 @@
             }
 
             await initializeFirebase();
+            
+            // Limpar duplicatas existentes no Firebase
+            await cleanDuplicates();
+            
             await loadOrders();
             setupFilters();
             setupRealTimeUpdates();
