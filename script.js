@@ -478,10 +478,10 @@ function processCheckout() {
         return;
     }
     
-    // Validar telefone
-    const phoneRegex = /^\(?[0-9]{2}\)?[0-9]{4,5}[0-9]{4}$/;
-    if (!phoneRegex.test(customerPhone.replace(/\D/g, ''))) {
-        showNotification('Por favor, digite um telefone válido!', 'error');
+    // Validar telefone (mais flexível)
+    const cleanPhone = customerPhone.replace(/\D/g, '');
+    if (cleanPhone.length < 10 || cleanPhone.length > 11) {
+        showNotification('Por favor, digite um telefone válido! (10 ou 11 dígitos)', 'error');
         return;
     }
     
@@ -490,45 +490,105 @@ function processCheckout() {
     checkoutBtn.innerHTML = 'Enviando...';
     checkoutBtn.disabled = true;
     
-    setTimeout(() => {
-        // Gerar mensagem de confirmação do restaurante
-        const confirmationMessage = generateRestaurantConfirmationMessage(customerName);
-        
-        // Salvar pedido no localStorage para acompanhamento
-        const orderId = generateOrderId();
-        saveOrderToLocalStorage(customerName, customerPhone);
-        
-        // Notificar administrador
-        notifyAdmin({
-            id: orderId,
-            total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-            timestamp: new Date().toISOString(),
-            customer: { name: customerName, phone: customerPhone }
-        });
-        
-        // Enviar mensagem real para WhatsApp
-        sendWhatsAppMessage(customerPhone, confirmationMessage);
-        
+    // Gerar mensagem de confirmação do restaurante
+    const confirmationMessage = generateRestaurantConfirmationMessage(customerName);
+    
+    // Salvar pedido no localStorage para acompanhamento
+    const orderId = generateOrderId();
+    saveOrderToLocalStorage(customerName, customerPhone);
+    
+    // Notificar administrador
+    notifyAdmin({
+        id: orderId,
+        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        timestamp: new Date().toISOString(),
+        customer: { name: customerName, phone: customerPhone }
+    });
+    
+    // Enviar mensagem real para WhatsApp
+    const whatsappSent = sendWhatsAppMessage(customerPhone, confirmationMessage);
+    
+    if (whatsappSent) {
         // Mostrar confirmação
-        showNotification('✅ Pedido enviado! Confirmação enviada via WhatsApp!', 'success');
+        showNotification('✅ Pedido enviado! WhatsApp aberto com confirmação!', 'success');
         
-        // Limpar carrinho e fechar
-        cart = [];
-        updateCartDisplay();
-        closeCart();
-        
-        // Resetar formulário
-        document.getElementById('customerPhone').value = '';
-        document.getElementById('customerName').value = '';
-        document.getElementById('checkoutForm').style.display = 'none';
-        
-        // Resetar botão
-        checkoutBtn.style.transform = 'scale(1)';
-        checkoutBtn.innerHTML = 'Finalizar Pedido';
-        checkoutBtn.disabled = false;
-        checkoutBtn.onclick = checkout;
-        
-    }, 1000);
+        // Mostrar modal com instruções caso WhatsApp não abra
+        setTimeout(() => {
+            showWhatsAppInstructions(confirmationMessage);
+        }, 2000);
+    } else {
+        showNotification('❌ Erro ao abrir WhatsApp. Verifique se não está bloqueado.', 'error');
+    }
+    
+    // Limpar carrinho e fechar
+    cart = [];
+    updateCartDisplay();
+    closeCart();
+    
+    // Resetar formulário
+    document.getElementById('customerPhone').value = '';
+    document.getElementById('customerName').value = '';
+    document.getElementById('checkoutForm').style.display = 'none';
+    
+    // Resetar botão
+    checkoutBtn.style.transform = 'scale(1)';
+    checkoutBtn.innerHTML = 'Finalizar Pedido';
+    checkoutBtn.disabled = false;
+    checkoutBtn.onclick = checkout;
+}
+
+// Mostrar instruções do WhatsApp
+function showWhatsAppInstructions(message) {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 5000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        max-width: 500px;
+        width: 100%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        text-align: center;
+    `;
+    
+    content.innerHTML = `
+        <div style="margin-bottom: 20px;">
+            <h3 style="color: #2b2d42; margin: 0 0 10px 0;">📱 WhatsApp não abriu?</h3>
+            <p style="color: #666; margin: 0;">Se o WhatsApp não abriu automaticamente, copie a mensagem abaixo e envie manualmente:</p>
+        </div>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; font-family: monospace; white-space: pre-wrap; font-size: 12px; line-height: 1.4; text-align: left; margin-bottom: 20px; max-height: 300px; overflow-y: auto;">${message}</div>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button onclick="navigator.clipboard.writeText('${message.replace(/'/g, "\\'")}').then(() => alert('Mensagem copiada!'))" style="background: #25D366; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">📋 Copiar Mensagem</button>
+            <button onclick="this.closest('.modal').remove()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Fechar</button>
+        </div>
+    `;
+    
+    modal.className = 'modal';
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    
+    // Fechar ao clicar fora
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
 }
 
 // Mostrar mensagem de confirmação que seria enviada
@@ -586,15 +646,42 @@ function showConfirmationMessage(message) {
 
 // Enviar mensagem real para WhatsApp
 function sendWhatsAppMessage(phone, message) {
-    // Limpar e formatar telefone
-    const cleanPhone = phone.replace(/\D/g, '');
-    const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : '55' + cleanPhone;
-    
-    // Criar URL do WhatsApp
-    const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
-    
-    // Abrir WhatsApp
-    window.open(whatsappUrl, '_blank');
+    try {
+        // Limpar e formatar telefone
+        const cleanPhone = phone.replace(/\D/g, '');
+        let formattedPhone;
+        
+        // Garantir que tenha 11 dígitos (DDD + 9 dígitos)
+        if (cleanPhone.length === 10) {
+            // Adicionar 9 no início se for celular antigo
+            formattedPhone = '55' + cleanPhone;
+        } else if (cleanPhone.length === 11) {
+            formattedPhone = '55' + cleanPhone;
+        } else if (cleanPhone.length === 13 && cleanPhone.startsWith('55')) {
+            formattedPhone = cleanPhone;
+        } else {
+            formattedPhone = '55' + cleanPhone;
+        }
+        
+        // Criar URL do WhatsApp
+        const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+        
+        console.log('Enviando para WhatsApp:', whatsappUrl);
+        
+        // Tentar abrir WhatsApp
+        const newWindow = window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+        
+        if (!newWindow) {
+            // Se popup foi bloqueado, tentar redirecionar na mesma aba
+            window.location.href = whatsappUrl;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Erro ao enviar WhatsApp:', error);
+        showNotification('Erro ao abrir WhatsApp. Tente novamente.', 'error');
+        return false;
+    }
 }
 
 // Gerar mensagem de confirmação do restaurante para o cliente
@@ -1103,6 +1190,24 @@ function initializeApp() {
     document.getElementById('loginForm').addEventListener('submit', login);
     document.getElementById('loginClose').addEventListener('click', hideLoginModal);
     document.getElementById('loginOverlay').addEventListener('click', hideLoginModal);
+    
+    // Máscara para telefone
+    const phoneInput = document.getElementById('customerPhone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                if (value.length <= 2) {
+                    value = value;
+                } else if (value.length <= 7) {
+                    value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+                } else {
+                    value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
+                }
+                e.target.value = value;
+            }
+        });
+    }
     
     // Event listeners de navegação suave
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
