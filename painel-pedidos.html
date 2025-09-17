@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Pedidos - FRY Sushi Delivery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo img {
+            width: 40px;
+            height: 40px;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid #00ff00;
+            border-radius: 20px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #00ff00;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .main-content {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.75rem 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+
+        .orders-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+        }
+
+        .orders-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .orders-title {
+            font-size: 1.5rem;
+            color: #ff6b6b;
+        }
+
+        .refresh-btn {
+            padding: 0.5rem 1rem;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: #45a049;
+        }
+
+        .orders-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .order-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .order-card:hover {
+            transform: translateX(5px);
+            border-color: #ff6b6b;
+        }
+
+        .order-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: #ff6b6b;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .order-id {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .order-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-pendente {
+            background: #ffeb3b;
+            color: #000;
+        }
+
+        .status-preparando {
+            background: #ff9800;
+            color: white;
+        }
+
+        .status-pronto {
+            background: #4caf50;
+            color: white;
+        }
+
+        .status-entregue {
+            background: #2196f3;
+            color: white;
+        }
+
+        .order-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: #ccc;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            font-weight: bold;
+            color: white;
+        }
+
+        .order-items {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .items-title {
+            font-size: 0.9rem;
+            color: #ff6b6b;
+            margin-bottom: 0.5rem;
+        }
+
+        .item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+
+        .no-orders {
+            text-align: center;
+            padding: 3rem;
+            color: #888;
+            font-size: 1.2rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #ff6b6b;
+        }
+
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid #ff4444;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                justify-content: center;
+            }
+            
+            .order-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="logo.svg" alt="FRY Sushi Delivery">
+            <h1>Painel de Pedidos</h1>
+        </div>
+        <div class="status-indicator">
+            <div class="status-dot"></div>
+            <span>Conectado ao Firebase</span>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalPedidos">0</div>
+                <div class="stat-label">Total de Pedidos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pedidosPendentes">0</div>
+                <div class="stat-label">Pendentes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pedidosPreparando">0</div>
+                <div class="stat-label">Preparando</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="faturamentoHoje">R$ 0,00</div>
+                <div class="stat-label">Faturamento Hoje</div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">Todos</button>
+            <button class="filter-btn" data-filter="pendente">Pendentes</button>
+            <button class="filter-btn" data-filter="preparando">Preparando</button>
+            <button class="filter-btn" data-filter="pronto">Prontos</button>
+            <button class="filter-btn" data-filter="entregue">Entregues</button>
+        </div>
+
+        <div class="orders-container">
+            <div class="orders-header">
+                <h2 class="orders-title">Pedidos em Tempo Real</h2>
+                <button class="refresh-btn" onclick="loadOrders()">🔄 Atualizar</button>
+            </div>
+            <div id="ordersList" class="orders-list">
+                <div class="loading">Carregando pedidos...</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyC9UzFuG_0wYjsXkNDf776RCY8X3TpcI1Q",
+            authDomain: "fryfrydelivery.firebaseapp.com",
+            projectId: "fryfrydelivery",
+            storageBucket: "fryfrydelivery.firebasestorage.app",
+            messagingSenderId: "567260128188",
+            appId: "1:567260128188:web:aac55f5a4b8944622641b9",
+            measurementId: "G-SE7XWRPSRZ"
+        };
+
+        let db = null;
+        let firebaseInitialized = false;
+        let orders = [];
+        let currentFilter = 'all';
+
+        // Inicializar Firebase
+        async function initializeFirebase() {
+            try {
+                console.log('🔥 Inicializando Firebase...');
+                
+                if (typeof firebase !== 'undefined') {
+                    if (firebase.apps.length === 0) {
+                        firebase.initializeApp(firebaseConfig);
+                    }
+                    db = firebase.firestore();
+                    firebaseInitialized = true;
+                    console.log('✅ Firebase inicializado com sucesso!');
+                } else {
+                    throw new Error('Firebase não carregado');
+                }
+            } catch (error) {
+                console.error('❌ Erro ao inicializar Firebase:', error);
+                showError('Erro ao conectar com o Firebase');
+            }
+        }
+
+        // Carregar pedidos do Firebase
+        async function loadOrders() {
+            if (!firebaseInitialized || !db) {
+                showError('Firebase não inicializado');
+                return;
+            }
+
+            try {
+                console.log('📊 Carregando pedidos do Firebase...');
+                
+                const ordersRef = db.collection('orders');
+                const querySnapshot = await ordersRef.orderBy('timestamp', 'desc').get();
+                
+                orders = [];
+                querySnapshot.forEach((doc) => {
+                    orders.push(doc.data());
+                });
+                
+                console.log(`✅ ${orders.length} pedidos carregados`);
+                updateStats();
+                renderOrders();
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar pedidos:', error);
+                showError('Erro ao carregar pedidos do Firebase');
+            }
+        }
+
+        // Atualizar estatísticas
+        function updateStats() {
+            const totalPedidos = orders.length;
+            const pedidosPendentes = orders.filter(order => order.status === 'pendente').length;
+            const pedidosPreparando = orders.filter(order => order.status === 'preparando').length;
+            const pedidosProntos = orders.filter(order => order.status === 'pronto').length;
+            const pedidosEntregues = orders.filter(order => order.status === 'entregue').length;
+            
+            // Calcular faturamento de hoje
+            const hoje = new Date().toDateString();
+            const faturamentoHoje = orders
+                .filter(order => new Date(order.timestamp).toDateString() === hoje)
+                .reduce((sum, order) => sum + (order.total || 0), 0);
+            
+            document.getElementById('totalPedidos').textContent = totalPedidos;
+            document.getElementById('pedidosPendentes').textContent = pedidosPendentes;
+            document.getElementById('pedidosPreparando').textContent = pedidosPreparando;
+            document.getElementById('faturamentoHoje').textContent = `R$ ${faturamentoHoje.toFixed(2).replace('.', ',')}`;
+        }
+
+        // Renderizar pedidos
+        function renderOrders() {
+            const ordersList = document.getElementById('ordersList');
+            
+            if (orders.length === 0) {
+                ordersList.innerHTML = '<div class="no-orders">Nenhum pedido encontrado</div>';
+                return;
+            }
+            
+            let filteredOrders = orders;
+            if (currentFilter !== 'all') {
+                filteredOrders = orders.filter(order => order.status === currentFilter);
+            }
+            
+            if (filteredOrders.length === 0) {
+                ordersList.innerHTML = '<div class="no-orders">Nenhum pedido encontrado para este filtro</div>';
+                return;
+            }
+            
+            ordersList.innerHTML = filteredOrders.map(order => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-id">${order.id}</div>
+                        <div class="order-status status-${order.status}">${order.status}</div>
+                    </div>
+                    <div class="order-info">
+                        <div class="info-item">
+                            <div class="info-label">Cliente</div>
+                            <div class="info-value">${order.cliente || 'N/A'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Telefone</div>
+                            <div class="info-value">${order.telefone || 'N/A'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Total</div>
+                            <div class="info-value">R$ ${(order.total || 0).toFixed(2).replace('.', ',')}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Data</div>
+                            <div class="info-value">${new Date(order.timestamp).toLocaleString('pt-BR')}</div>
+                        </div>
+                    </div>
+                    <div class="order-items">
+                        <div class="items-title">Itens do Pedido:</div>
+                        ${(order.itens || []).map(item => `
+                            <div class="item">
+                                <span>${item.quantity}x ${item.name}</span>
+                                <span>R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Mostrar erro
+        function showError(message) {
+            document.getElementById('ordersList').innerHTML = `
+                <div class="error">${message}</div>
+            `;
+        }
+
+        // Configurar filtros
+        function setupFilters() {
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.filter;
+                    renderOrders();
+                });
+            });
+        }
+
+        // Atualização em tempo real
+        function setupRealTimeUpdates() {
+            setInterval(async () => {
+                if (firebaseInitialized && db) {
+                    try {
+                        const ordersRef = db.collection('orders');
+                        const querySnapshot = await ordersRef.orderBy('timestamp', 'desc').get();
+                        
+                        const newOrders = [];
+                        querySnapshot.forEach((doc) => {
+                            newOrders.push(doc.data());
+                        });
+                        
+                        // Verificar se houve mudanças
+                        if (newOrders.length !== orders.length || 
+                            JSON.stringify(newOrders) !== JSON.stringify(orders)) {
+                            console.log('🔄 Novos pedidos detectados!');
+                            orders = newOrders;
+                            updateStats();
+                            renderOrders();
+                        }
+                    } catch (error) {
+                        console.error('❌ Erro na atualização em tempo real:', error);
+                    }
+                }
+            }, 3000); // Verificar a cada 3 segundos
+        }
+
+        // Inicializar aplicação
+        async function initializeApp() {
+            await initializeFirebase();
+            await loadOrders();
+            setupFilters();
+            setupRealTimeUpdates();
+        }
+
+        // Inicializar quando a página carregar
+        window.addEventListener('load', initializeApp);
+    </script>
+</body>
+</html>

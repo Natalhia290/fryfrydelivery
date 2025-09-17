@@ -72,6 +72,12 @@ function testAdminRedirect() {
     window.location.href = 'admin.html';
 }
 
+// Função para abrir painel de pedidos
+function openPedidosPanel() {
+    console.log('Abrindo painel de pedidos...');
+    window.open('painel-pedidos.html', '_blank');
+}
+
 function login(event) {
     event.preventDefault();
     
