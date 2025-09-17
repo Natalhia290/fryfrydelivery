@@ -10,6 +10,29 @@ let sessionTimeout = null;
 // Sistema de Gerenciamento de Imagens
 let productImages = {}; // Armazenar imagens base64 por ID do produto
 
+// Configuração do Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyC9UzFuG_0wYjsXkNDf776RCY8X3TpcI1Q",
+    authDomain: "fryfrydelivery.firebaseapp.com",
+    projectId: "fryfrydelivery",
+    storageBucket: "fryfrydelivery.firebasestorage.app",
+    messagingSenderId: "567260128188",
+    appId: "1:567260128188:web:aac55f5a4b8944622641b9",
+    measurementId: "G-SE7XWRPSRZ"
+};
+
+// Inicializar Firebase
+let db;
+try {
+    // Verificar se Firebase está disponível
+    if (typeof firebase !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+    }
+} catch (error) {
+    console.log('Firebase não disponível, usando localStorage como fallback');
+}
+
 // Função para obter imagem do produto
 function getProductImage(product) {
     // Primeiro verifica se há imagem base64 personalizada
@@ -1506,17 +1529,62 @@ function uploadImage(productId, file) {
 
 function saveImageToFirebase(productId, base64Image) {
     return new Promise((resolve, reject) => {
-        // Simular salvamento no Firebase
-        // Em uma implementação real, você usaria o Firebase SDK
-        setTimeout(() => {
-            // Salvar no localStorage como fallback
+        if (db) {
+            // Salvar no Firebase
+            db.collection('produtos').doc(productId.toString()).set({
+                id: productId,
+                imagem: base64Image,
+                timestamp: new Date().toISOString()
+            })
+            .then(() => {
+                console.log('Imagem salva no Firebase:', productId);
+                // Também salvar no localStorage como backup
+                localStorage.setItem(`product_image_${productId}`, base64Image);
+                resolve();
+            })
+            .catch(error => {
+                console.error('Erro ao salvar no Firebase:', error);
+                // Fallback para localStorage
+                localStorage.setItem(`product_image_${productId}`, base64Image);
+                resolve();
+            });
+        } else {
+            // Fallback para localStorage se Firebase não estiver disponível
             localStorage.setItem(`product_image_${productId}`, base64Image);
             resolve();
-        }, 1000);
+        }
     });
 }
 
 function loadImagesFromFirebase() {
+    if (db) {
+        // Carregar imagens do Firebase
+        db.collection('produtos').get()
+            .then(querySnapshot => {
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.imagem) {
+                        productImages[data.id] = data.imagem;
+                    }
+                });
+                console.log('Imagens carregadas do Firebase');
+                // Atualizar o cardápio se estiver visível
+                if (document.getElementById('menuGrid')) {
+                    renderMenu();
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar do Firebase:', error);
+                // Fallback para localStorage
+                loadFromLocalStorage();
+            });
+    } else {
+        // Fallback para localStorage
+        loadFromLocalStorage();
+    }
+}
+
+function loadFromLocalStorage() {
     // Carregar imagens salvas do localStorage
     Object.values(menuData).flat().forEach(product => {
         const savedImage = localStorage.getItem(`product_image_${product.id}`);

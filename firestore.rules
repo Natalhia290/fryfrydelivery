@@ -1,0 +1,31 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Permitir leitura e escrita para pedidos
+    match /pedidos/{pedidoId} {
+      allow read, write: if true;
+    }
+    
+    // Permitir leitura e escrita para imagens de produtos
+    match /produtos/{produtoId} {
+      allow read, write: if true;
+    }
+    
+    // Permitir leitura e escrita para configurações
+    match /configuracoes/{configId} {
+      allow read, write: if true;
+    }
+    
+    // Permitir leitura e escrita para estatísticas
+    match /estatisticas/{statId} {
+      allow read, write: if true;
+    }
+    
+    // Permitir leitura pública para cardápio
+    match /cardapio/{itemId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}
