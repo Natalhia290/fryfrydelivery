@@ -10,6 +10,27 @@ let sessionTimeout = null;
 // Sistema de Gerenciamento de Imagens
 let productImages = {}; // Armazenar imagens base64 por ID do produto
 
+// Função para mostrar painel admin (definida globalmente)
+function showAdminPanel() {
+    console.log('showAdminPanel chamada, isAuthenticated:', isAuthenticated);
+    
+    if (!isAuthenticated) {
+        console.log('Usuário não autenticado, mostrando modal de login');
+        showLoginModal();
+        return;
+    }
+    
+    console.log('Usuário autenticado, mostrando painel admin');
+    const adminPanel = document.getElementById('adminPanel');
+    if (adminPanel) {
+        adminPanel.classList.add('active');
+        updateAdminStats();
+        loadRecentOrders();
+    } else {
+        console.error('adminPanel não encontrado!');
+    }
+}
+
 // Configuração do Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyC9UzFuG_0wYjsXkNDf776RCY8X3TpcI1Q",
@@ -1286,26 +1307,6 @@ function checkSession() {
     }
 }
 
-function showAdminPanel() {
-    console.log('showAdminPanel chamada, isAuthenticated:', isAuthenticated);
-    
-    if (!isAuthenticated) {
-        console.log('Usuário não autenticado, mostrando modal de login');
-        showLoginModal();
-        return;
-    }
-    
-    console.log('Usuário autenticado, mostrando painel admin');
-    const adminPanel = document.getElementById('adminPanel');
-    if (adminPanel) {
-        adminPanel.classList.add('active');
-        updateAdminStats();
-        loadRecentOrders();
-    } else {
-        console.error('adminPanel não encontrado!');
-    }
-}
-
 function hideAdminPanel() {
     const adminPanel = document.getElementById('adminPanel');
     adminPanel.classList.remove('active');
@@ -1367,16 +1368,8 @@ function initializeApp() {
     });
     
     // Event listeners do painel admin
-    const adminToggle = document.getElementById('adminToggle');
     const adminClose = document.getElementById('adminClose');
     const logoutBtn = document.getElementById('logoutBtn');
-    
-    if (adminToggle) {
-        console.log('Adicionando event listener ao adminToggle');
-        adminToggle.addEventListener('click', showAdminPanel);
-    } else {
-        console.error('adminToggle não encontrado!');
-    }
     
     if (adminClose) adminClose.addEventListener('click', hideAdminPanel);
     if (logoutBtn) logoutBtn.addEventListener('click', logout);
