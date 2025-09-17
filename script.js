@@ -58,6 +58,47 @@ function clearLoginForm() {
     if (loginError) loginError.textContent = '';
 }
 
+function login(event) {
+    event.preventDefault();
+    
+    const cpf = document.getElementById('cpfInput').value;
+    const password = document.getElementById('passwordInput').value;
+    const errorEl = document.getElementById('loginError');
+    
+    console.log('Tentativa de login:', { cpf, password });
+    
+    // Validação básica
+    if (!cpf || !password) {
+        if (errorEl) errorEl.textContent = 'Por favor, preencha todos os campos';
+        return;
+    }
+    
+    // Autenticação
+    const result = authenticate(cpf, password);
+    console.log('Resultado da autenticação:', result);
+    
+    if (result.success) {
+        isAuthenticated = true;
+        hideLoginModal();
+        showNotification('Login realizado com sucesso!', 'success');
+        
+        // Definir timeout da sessão (30 minutos)
+        if (sessionTimeout) clearTimeout(sessionTimeout);
+        sessionTimeout = setTimeout(logout, 30 * 60 * 1000);
+        
+        // Salvar sessão no localStorage
+        localStorage.setItem('fry_session', JSON.stringify({
+            authenticated: true,
+            timestamp: Date.now()
+        }));
+        
+        // Mostrar painel admin
+        showAdminPanel();
+    } else {
+        if (errorEl) errorEl.textContent = result.message;
+    }
+}
+
 // Configuração do Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyC9UzFuG_0wYjsXkNDf776RCY8X3TpcI1Q",
