@@ -1810,5 +1810,16 @@ function showUploadStatus(message, type) {
     }
 }
 
+// Função para rolar até o menu
+function scrollToMenu() {
+    const menuSection = document.getElementById('menu');
+    if (menuSection) {
+        menuSection.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }
+}
+
 // Inicializar quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', initializeApp);
