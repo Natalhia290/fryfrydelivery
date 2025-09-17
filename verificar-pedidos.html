@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verificar Pedidos - FRY SUSHI</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f0f0f0; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        button { padding: 15px 30px; margin: 10px; background: #e74c3c; color: white; border: none; cursor: pointer; border-radius: 5px; font-size: 16px; }
+        button:hover { background: #c0392b; }
+        .result { margin: 20px 0; padding: 15px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; }
+        .success { color: #27ae60; font-weight: bold; }
+        .error { color: #e74c3c; font-weight: bold; }
+        .info { color: #3498db; }
+        .pedido { margin: 10px 0; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Verificar Pedidos - FRY SUSHI</h1>
+        <p>Este teste verifica se os pedidos estão sendo salvos no Firebase</p>
+        
+        <button onclick="verificarFirebase()">VERIFICAR FIREBASE</button>
+        <button onclick="verificarLocalStorage()">VERIFICAR LOCALSTORAGE</button>
+        <button onclick="limpar()">LIMPAR</button>
+        
+        <div id="resultado" class="result"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        const resultado = document.getElementById('resultado');
+        
+        function limpar() {
+            resultado.innerHTML = '';
+        }
+
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyC9UzFuG_0wYjsXkNDf776RCY8X3TpcI1Q",
+            authDomain: "fryfrydelivery.firebaseapp.com",
+            projectId: "fryfrydelivery",
+            storageBucket: "fryfrydelivery.firebasestorage.app",
+            messagingSenderId: "567260128188",
+            appId: "1:567260128188:web:aac55f5a4b8944622641b9",
+            measurementId: "G-SE7XWRPSRZ"
+        };
+
+        let app, db;
+
+        // Inicializar Firebase
+        async function initFirebase() {
+            try {
+                app = firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                return true;
+            } catch (error) {
+                resultado.innerHTML += '<div class="error">❌ Erro ao inicializar Firebase: ' + error.message + '</div>';
+                return false;
+            }
+        }
+
+        // Verificar pedidos no Firebase
+        async function verificarFirebase() {
+            resultado.innerHTML = '<div class="info">🔄 Verificando pedidos no Firebase...</div>';
+            
+            const initSuccess = await initFirebase();
+            if (!initSuccess) return;
+            
+            try {
+                const snapshot = await db.collection('orders').orderBy('timestamp', 'desc').get();
+                
+                resultado.innerHTML += '<div class="success">✅ Firebase conectado com sucesso!</div>';
+                resultado.innerHTML += '<div class="info">📊 Total de pedidos no Firebase: ' + snapshot.size + '</div>';
+                
+                if (snapshot.empty) {
+                    resultado.innerHTML += '<div class="error">⚠️ Nenhum pedido encontrado no Firebase</div>';
+                } else {
+                    resultado.innerHTML += '<div class="info">📋 Lista de pedidos:</div>';
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        resultado.innerHTML += `
+                            <div class="pedido">
+                                <strong>ID:</strong> ${data.id}<br>
+                                <strong>Cliente:</strong> ${data.cliente}<br>
+                                <strong>Telefone:</strong> ${data.telefone}<br>
+                                <strong>Total:</strong> R$ ${data.total}<br>
+                                <strong>Status:</strong> ${data.status}<br>
+                                <strong>Data:</strong> ${new Date(data.timestamp).toLocaleString('pt-BR')}<br>
+                                <strong>Itens:</strong> ${data.itens.map(item => `${item.name} (${item.quantity}x)`).join(', ')}
+                            </div>
+                        `;
+                    });
+                }
+                
+            } catch (error) {
+                resultado.innerHTML += '<div class="error">❌ Erro ao carregar pedidos: ' + error.message + '</div>';
+                resultado.innerHTML += '<div class="error">🔍 Código: ' + error.code + '</div>';
+            }
+        }
+
+        // Verificar pedidos no localStorage
+        function verificarLocalStorage() {
+            resultado.innerHTML = '<div class="info">🔄 Verificando pedidos no localStorage...</div>';
+            
+            try {
+                const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
+                
+                resultado.innerHTML += '<div class="success">✅ localStorage acessado com sucesso!</div>';
+                resultado.innerHTML += '<div class="info">📊 Total de pedidos no localStorage: ' + orders.length + '</div>';
+                
+                if (orders.length === 0) {
+                    resultado.innerHTML += '<div class="error">⚠️ Nenhum pedido encontrado no localStorage</div>';
+                } else {
+                    resultado.innerHTML += '<div class="info">📋 Lista de pedidos:</div>';
+                    orders.forEach(order => {
+                        resultado.innerHTML += `
+                            <div class="pedido">
+                                <strong>ID:</strong> ${order.id}<br>
+                                <strong>Cliente:</strong> ${order.cliente}<br>
+                                <strong>Telefone:</strong> ${order.telefone}<br>
+                                <strong>Total:</strong> R$ ${order.total}<br>
+                                <strong>Status:</strong> ${order.status}<br>
+                                <strong>Data:</strong> ${new Date(order.timestamp).toLocaleString('pt-BR')}<br>
+                                <strong>Itens:</strong> ${order.itens.map(item => `${item.name} (${item.quantity}x)`).join(', ')}
+                            </div>
+                        `;
+                    });
+                }
+                
+            } catch (error) {
+                resultado.innerHTML += '<div class="error">❌ Erro ao carregar localStorage: ' + error.message + '</div>';
+            }
+        }
+
+        // Auto-inicializar
+        window.onload = function() {
+            resultado.innerHTML = '<div class="info">🚀 Verificador de Pedidos iniciado</div>';
+            resultado.innerHTML += '<div class="info">📋 Clique em "VERIFICAR FIREBASE" para ver todos os pedidos</div>';
+        };
+    </script>
+</body>
+</html>

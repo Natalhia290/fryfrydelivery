@@ -577,6 +577,7 @@ function setupRealTimeUpdates() {
     // Verificar mudanças no Firebase a cada 3 segundos
     setInterval(async () => {
         try {
+            console.log('Verificando atualizações... Firebase inicializado:', firebaseInitialized, 'DB:', !!db);
             if (firebaseInitialized && db) {
                 // Carregar do Firebase
                 let newOrders = [];
@@ -601,7 +602,14 @@ function setupRealTimeUpdates() {
                     });
                 }
                 
-                if (newOrders.length !== orders.length || JSON.stringify(newOrders) !== JSON.stringify(orders)) {
+                // Comparar pedidos de forma mais eficiente
+                const hasChanges = newOrders.length !== orders.length || 
+                    newOrders.some((newOrder, index) => {
+                        const oldOrder = orders[index];
+                        return !oldOrder || newOrder.id !== oldOrder.id || newOrder.updatedAt !== oldOrder.updatedAt;
+                    });
+                
+                if (hasChanges) {
                     console.log('Novos pedidos detectados no Firebase, atualizando...', newOrders.length, 'pedidos');
                     orders = newOrders;
                     updateStats();
