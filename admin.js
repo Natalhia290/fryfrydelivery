@@ -386,9 +386,38 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+// Verificar autenticação
+function checkAuth() {
+    const session = localStorage.getItem('fry_session');
+    if (!session) {
+        console.log('Usuário não autenticado, redirecionando...');
+        window.location.href = 'index.html';
+        return false;
+    }
+    
+    const sessionData = JSON.parse(session);
+    const now = Date.now();
+    const sessionAge = now - sessionData.timestamp;
+    
+    // Verificar se a sessão expirou (30 minutos)
+    if (sessionAge > 30 * 60 * 1000) {
+        console.log('Sessão expirada, redirecionando...');
+        localStorage.removeItem('fry_session');
+        window.location.href = 'index.html';
+        return false;
+    }
+    
+    return true;
+}
+
 // Inicializar aplicação
 async function initializeAdmin() {
     console.log('Inicializando painel administrativo...');
+    
+    // Verificar autenticação
+    if (!checkAuth()) {
+        return;
+    }
     
     // Inicializar Firebase
     await initializeFirebase();
@@ -409,7 +438,41 @@ async function initializeAdmin() {
     renderCardapio();
     renderProductPhotos();
     
+    // Configurar atualização em tempo real
+    setupRealTimeUpdates();
+    
     console.log('Painel administrativo inicializado!');
+}
+
+// Configurar atualização em tempo real
+function setupRealTimeUpdates() {
+    // Verificar mudanças no localStorage a cada 2 segundos
+    setInterval(() => {
+        const savedOrders = localStorage.getItem('fryOrders');
+        if (savedOrders) {
+            const newOrders = JSON.parse(savedOrders);
+            if (JSON.stringify(newOrders) !== JSON.stringify(orders)) {
+                console.log('Novos pedidos detectados, atualizando...');
+                orders = newOrders;
+                updateStats();
+                renderOrders(document.getElementById('statusFilter').value);
+            }
+        }
+    }, 2000);
+    
+    // Verificar mudanças no menu a cada 5 segundos
+    setInterval(() => {
+        const savedMenu = localStorage.getItem('fryMenu');
+        if (savedMenu) {
+            const newMenu = JSON.parse(savedMenu);
+            if (JSON.stringify(newMenu) !== JSON.stringify(menuData)) {
+                console.log('Menu atualizado, recarregando...');
+                menuData = newMenu;
+                renderCardapio();
+                renderProductPhotos();
+            }
+        }
+    }, 5000);
 }
 
 // Inicializar quando a página carregar

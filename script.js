@@ -58,6 +58,20 @@ function clearLoginForm() {
     if (loginError) loginError.textContent = '';
 }
 
+// Função de teste para redirecionamento
+function testAdminRedirect() {
+    console.log('Testando redirecionamento para admin...');
+    // Simular login bem-sucedido
+    isAuthenticated = true;
+    localStorage.setItem('fry_session', JSON.stringify({
+        authenticated: true,
+        timestamp: Date.now()
+    }));
+    
+    // Redirecionar
+    window.location.href = 'admin.html';
+}
+
 function login(event) {
     event.preventDefault();
     
@@ -93,6 +107,7 @@ function login(event) {
         }));
         
         // Redirecionar para página admin
+        console.log('Redirecionando para admin.html...');
         window.location.href = 'admin.html';
     } else {
         if (errorEl) errorEl.textContent = result.message;
