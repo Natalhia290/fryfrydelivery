@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Admin Orders</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a1a; color: white; }
+        button { padding: 10px 20px; margin: 10px; background: #ff6b6b; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #ff5252; }
+        .result { background: #333; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .success { border-left: 4px solid #4caf50; }
+        .error { border-left: 4px solid #f44336; }
+        .info { border-left: 4px solid #2196f3; }
+        .order { background: #444; padding: 10px; margin: 5px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Admin Orders</h1>
+    
+    <button onclick="testFirebaseInit()">1. Testar Firebase Init</button>
+    <button onclick="testLoadOrders()">2. Carregar Pedidos</button>
+    <button onclick="testRealTime()">3. Testar Tempo Real</button>
+    <button onclick="clearResults()">Limpar</button>
+    
+    <div id="results"></div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        let db = null;
+        let firebaseInitialized = false;
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC9UzFuG_0wYjsXkNDf776RCY8X3TpcI1Q",
+            authDomain: "fryfrydelivery.firebaseapp.com",
+            projectId: "fryfrydelivery",
+            storageBucket: "fryfrydelivery.firebasestorage.app",
+            messagingSenderId: "567260128188",
+            appId: "1:567260128188:web:aac55f5a4b8944622641b9",
+            measurementId: "G-SE7XWRPSRZ"
+        };
+
+        async function testFirebaseInit() {
+            addResult('🔄 Testando inicialização Firebase...', 'info');
+            
+            try {
+                if (typeof firebase !== 'undefined') {
+                    addResult('✅ Firebase v8 disponível', 'success');
+                    
+                    if (firebase.apps.length === 0) {
+                        const app = firebase.initializeApp(firebaseConfig);
+                        addResult('✅ Firebase app inicializado', 'success');
+                    } else {
+                        addResult('✅ Firebase app já inicializado', 'success');
+                    }
+                    
+                    db = firebase.firestore();
+                    firebaseInitialized = true;
+                    addResult('✅ Firebase v8 inicializado com sucesso!', 'success');
+                    addResult('🔥 DB disponível: ' + !!db, 'info');
+                    
+                    // Testar conexão
+                    await testConnection();
+                    
+                } else {
+                    addResult('❌ Firebase não encontrado!', 'error');
+                }
+            } catch (error) {
+                addResult('❌ Erro: ' + error.message, 'error');
+            }
+        }
+
+        async function testConnection() {
+            if (!db) {
+                addResult('❌ DB não disponível para teste', 'error');
+                return;
+            }
+            
+            try {
+                addResult('🧪 Testando conexão...', 'info');
+                const testRef = db.collection('orders');
+                const testSnapshot = await testRef.limit(1).get();
+                addResult('✅ Conexão OK! Documentos: ' + testSnapshot.size, 'success');
+            } catch (error) {
+                addResult('❌ Erro na conexão: ' + error.message, 'error');
+            }
+        }
+
+        async function testLoadOrders() {
+            if (!firebaseInitialized || !db) {
+                addResult('❌ Firebase não inicializado!', 'error');
+                return;
+            }
+
+            try {
+                addResult('🔄 Carregando pedidos...', 'info');
+                
+                const ordersRef = db.collection('orders');
+                const querySnapshot = await ordersRef.orderBy('timestamp', 'desc').get();
+                
+                addResult('📊 Documentos encontrados: ' + querySnapshot.size, 'info');
+                
+                const orders = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    orders.push(data);
+                    addResult('📄 Pedido: ' + data.id + ' - Cliente: ' + data.cliente + ' - R$ ' + data.total, 'info');
+                });
+                
+                addResult('✅ ' + orders.length + ' pedidos carregados!', 'success');
+                
+                // Mostrar detalhes dos pedidos
+                orders.forEach((order, index) => {
+                    const orderDiv = document.createElement('div');
+                    orderDiv.className = 'order';
+                    orderDiv.innerHTML = `
+                        <strong>Pedido ${index + 1}:</strong> ${order.id}<br>
+                        <strong>Cliente:</strong> ${order.cliente}<br>
+                        <strong>Total:</strong> R$ ${order.total}<br>
+                        <strong>Status:</strong> ${order.status}<br>
+                        <strong>Data:</strong> ${new Date(order.timestamp).toLocaleString()}
+                    `;
+                    document.getElementById('results').appendChild(orderDiv);
+                });
+                
+            } catch (error) {
+                addResult('❌ Erro ao carregar pedidos: ' + error.message, 'error');
+            }
+        }
+
+        async function testRealTime() {
+            if (!firebaseInitialized || !db) {
+                addResult('❌ Firebase não inicializado!', 'error');
+                return;
+            }
+
+            addResult('🔄 Iniciando teste de tempo real (10 segundos)...', 'info');
+            
+            let count = 0;
+            const interval = setInterval(async () => {
+                count++;
+                try {
+                    const ordersRef = db.collection('orders');
+                    const querySnapshot = await ordersRef.orderBy('timestamp', 'desc').get();
+                    
+                    addResult(`⏰ Verificação ${count}: ${querySnapshot.size} pedidos encontrados`, 'info');
+                    
+                    if (count >= 10) {
+                        clearInterval(interval);
+                        addResult('✅ Teste de tempo real concluído!', 'success');
+                    }
+                } catch (error) {
+                    addResult('❌ Erro na verificação: ' + error.message, 'error');
+                    clearInterval(interval);
+                }
+            }, 1000);
+        }
+
+        function addResult(message, type) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+            console.log(message);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        // Inicializar automaticamente
+        window.onload = async () => {
+            await testFirebaseInit();
+        };
+    </script>
+</body>
+</html>

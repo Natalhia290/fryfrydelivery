@@ -24,10 +24,23 @@ async function initializeFirebase() {
         if (typeof firebase !== 'undefined') {
             // Firebase v8 (compat) - já carregado no HTML
             console.log('🔥 Usando Firebase v8 (compat)');
-            const app = firebase.initializeApp(firebaseConfig);
+            
+            // Verificar se já foi inicializado
+            if (firebase.apps.length === 0) {
+                const app = firebase.initializeApp(firebaseConfig);
+                console.log('✅ Firebase app inicializado');
+            } else {
+                console.log('✅ Firebase app já inicializado');
+            }
+            
             db = firebase.firestore();
             firebaseInitialized = true;
             console.log('✅ Firebase v8 inicializado com sucesso!');
+            console.log('🔥 DB:', !!db);
+            
+            // Testar conexão imediatamente
+            await testFirebaseConnection();
+            
         } else {
             console.error('❌ Firebase não encontrado! Verifique se os scripts estão carregados.');
             firebaseInitialized = false;
@@ -36,6 +49,23 @@ async function initializeFirebase() {
     } catch (error) {
         console.error('❌ Erro ao inicializar Firebase:', error);
         firebaseInitialized = false;
+    }
+}
+
+// Testar conexão Firebase
+async function testFirebaseConnection() {
+    if (!db) {
+        console.error('❌ DB não disponível para teste');
+        return;
+    }
+    
+    try {
+        console.log('🧪 Testando conexão Firebase...');
+        const testRef = db.collection('orders');
+        const testSnapshot = await testRef.limit(1).get();
+        console.log('✅ Conexão Firebase OK! Documentos encontrados:', testSnapshot.size);
+    } catch (error) {
+        console.error('❌ Erro no teste de conexão:', error);
     }
 }
 
@@ -60,18 +90,26 @@ async function loadData() {
     
     try {
         console.log('🔄 Carregando pedidos do Firebase...');
+        console.log('🔥 DB disponível:', !!db);
+        console.log('🔥 Firebase inicializado:', firebaseInitialized);
         
         // Usar Firebase v8 (compat) - sempre
         console.log('🔥 Carregando pedidos do Firebase v8...');
         const ordersRef = db.collection('orders');
+        console.log('🔥 OrdersRef criado:', !!ordersRef);
+        
         const querySnapshot = await ordersRef.orderBy('timestamp', 'desc').get();
+        console.log('🔥 Query executada. Documentos encontrados:', querySnapshot.size);
         
         orders = [];
         querySnapshot.forEach((doc) => {
-            orders.push(doc.data());
+            const data = doc.data();
+            console.log('📄 Pedido encontrado:', data.id, '- Cliente:', data.cliente);
+            orders.push(data);
         });
         
         console.log('✅ Pedidos carregados do Firebase:', orders.length);
+        console.log('📊 Lista de pedidos:', orders.map(o => o.id));
         
         // Atualizar currentOrderId baseado no maior ID existente
         if (orders.length > 0) {
@@ -540,15 +578,21 @@ function setupRealTimeUpdates() {
             // Carregar do Firebase v8 (compat)
             let newOrders = [];
             console.log('🔄 Verificando pedidos no Firebase...');
+            console.log('🔥 DB disponível:', !!db);
             
             const ordersRef = db.collection('orders');
             const querySnapshot = await ordersRef.orderBy('timestamp', 'desc').get();
             
+            console.log('🔥 Query executada. Documentos encontrados:', querySnapshot.size);
+            
             querySnapshot.forEach((doc) => {
-                newOrders.push(doc.data());
+                const data = doc.data();
+                console.log('📄 Pedido encontrado:', data.id, '- Cliente:', data.cliente);
+                newOrders.push(data);
             });
             
             console.log('📊 Pedidos encontrados no Firebase:', newOrders.length);
+            console.log('📊 IDs dos pedidos:', newOrders.map(o => o.id));
             
             // Comparar pedidos de forma mais eficiente
             const hasChanges = newOrders.length !== orders.length || 
