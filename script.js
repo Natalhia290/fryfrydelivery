@@ -92,8 +92,8 @@ function login(event) {
             timestamp: Date.now()
         }));
         
-        // Mostrar painel admin
-        showAdminPanel();
+        // Redirecionar para página admin
+        window.location.href = 'admin.html';
     } else {
         if (errorEl) errorEl.textContent = result.message;
     }
@@ -949,10 +949,22 @@ function generateCustomerOrderMessage(customerName) {
 }
 
 // Gerar ID único para o pedido
+let currentOrderNumber = 1;
+
 function generateOrderId() {
-    const timestamp = Date.now().toString().slice(-6);
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `FRY${timestamp}${random}`;
+    // Carregar número atual do localStorage
+    const savedNumber = localStorage.getItem('fryOrderNumber');
+    if (savedNumber) {
+        currentOrderNumber = parseInt(savedNumber);
+    }
+    
+    const orderId = `FRY${currentOrderNumber}DEL`;
+    currentOrderNumber++;
+    
+    // Salvar próximo número
+    localStorage.setItem('fryOrderNumber', currentOrderNumber.toString());
+    
+    return orderId;
 }
 
 // Salvar pedido no Firebase e localStorage
@@ -960,13 +972,13 @@ async function saveOrderToFirebase(customerName, customerPhone) {
     const order = {
         id: generateOrderId(),
         timestamp: new Date().toISOString(),
-        items: [...cart],
+        itens: [...cart],
         total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        status: 'pending',
-        customer: {
-            name: customerName,
-            phone: customerPhone
-        }
+        status: 'pendente',
+        cliente: customerName,
+        telefone: customerPhone,
+        notes: '',
+        updatedAt: new Date().toISOString()
     };
     
     // Salvar no localStorage (backup)
