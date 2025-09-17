@@ -455,6 +455,40 @@ body {
     color: var(--dark-purple);
 }
 
+.consultar-btn {
+    background: linear-gradient(135deg, #ff6b6b, #ff8e53) !important;
+    color: white !important;
+    border: none !important;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.consultar-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+.consultar-btn:hover::before {
+    left: 100%;
+}
+
+.consultar-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 12px 35px rgba(255, 107, 107, 0.6);
+    color: white !important;
+}
+
 /* Seções */
 .section-title {
     font-size: 2.5rem;

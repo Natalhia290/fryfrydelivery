@@ -161,6 +161,11 @@
             color: white;
         }
 
+        .status-saiu-entrega {
+            background: #9c27b0;
+            color: white;
+        }
+
         .status-entregue {
             background: #2196f3;
             color: white;
@@ -400,6 +405,7 @@
                 'pendente': 'Pendente',
                 'preparando': 'Preparando',
                 'pronto': 'Pronto',
+                'saiu-entrega': 'Saiu para Entrega',
                 'entregue': 'Entregue'
             };
 
@@ -457,10 +463,11 @@
                 { id: 'pendente', label: 'Pedido Recebido', icon: '📝' },
                 { id: 'preparando', label: 'Preparando', icon: '👨‍🍳' },
                 { id: 'pronto', label: 'Pronto para Entrega', icon: '✅' },
-                { id: 'entregue', label: 'Entregue', icon: '🚚' }
+                { id: 'saiu-entrega', label: 'Saiu para Entrega', icon: '🚚' },
+                { id: 'entregue', label: 'Entregue', icon: '🏠' }
             ];
 
-            const statusOrder = ['pendente', 'preparando', 'pronto', 'entregue'];
+            const statusOrder = ['pendente', 'preparando', 'pronto', 'saiu-entrega', 'entregue'];
             const currentIndex = statusOrder.indexOf(currentStatus);
 
             return steps.map((step, index) => {

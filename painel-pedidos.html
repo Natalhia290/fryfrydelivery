@@ -243,6 +243,11 @@
             color: white;
         }
 
+        .status-saiu-entrega {
+            background: #9c27b0;
+            color: white;
+        }
+
         .status-entregue {
             background: #2196f3;
             color: white;
@@ -413,6 +418,7 @@
             <button class="filter-btn" data-filter="pendente">Pendentes</button>
             <button class="filter-btn" data-filter="preparando">Preparando</button>
             <button class="filter-btn" data-filter="pronto">Prontos</button>
+            <button class="filter-btn" data-filter="saiu-entrega">Saiu para Entrega</button>
             <button class="filter-btn" data-filter="entregue">Entregues</button>
             <button class="filter-btn reset-btn" onclick="resetAllOrders()" style="background: #ff4444; border-color: #ff4444;">🗑️ Resetar Todos</button>
         </div>
@@ -575,6 +581,7 @@
                             <option value="pendente" ${order.status === 'pendente' ? 'selected' : ''}>Pendente</option>
                             <option value="preparando" ${order.status === 'preparando' ? 'selected' : ''}>Preparando</option>
                             <option value="pronto" ${order.status === 'pronto' ? 'selected' : ''}>Pronto</option>
+                            <option value="saiu-entrega" ${order.status === 'saiu-entrega' ? 'selected' : ''}>Saiu para Entrega</option>
                             <option value="entregue" ${order.status === 'entregue' ? 'selected' : ''}>Entregue</option>
                         </select>
                         <button class="update-btn" onclick="updateOrderStatus('${order.id}', document.querySelector('select[data-order-id=\"${order.id}\"]').value)">
