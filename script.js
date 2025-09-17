@@ -254,14 +254,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
 });
 
-function initializeApp() {
-    renderMenu();
-    setupEventListeners();
-    updateCartUI();
-    initializeAdminPanel();
-    requestNotificationPermission();
-}
-
 // Event Listeners
 function setupEventListeners() {
     // Carrinho
@@ -568,24 +560,16 @@ let firebaseInitialized = false;
 // Inicializar Firebase
 async function initializeFirebase() {
     try {
-        // Importar Firebase dinamicamente
-        const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
-        const { getFirestore } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyC9UzFuG_0wYjsXkNDf776RCY8X3TpcI1Q",
-            authDomain: "fryfrydelivery.firebaseapp.com",
-            projectId: "fryfrydelivery",
-            storageBucket: "fryfrydelivery.firebasestorage.app",
-            messagingSenderId: "567260128188",
-            appId: "1:567260128188:web:aac55f5a4b8944622641b9",
-            measurementId: "G-SE7XWRPSRZ"
-        };
-        
-        const app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        firebaseInitialized = true;
-        console.log('Firebase inicializado com sucesso!');
+        // Usar Firebase já carregado no HTML
+        if (typeof firebase !== 'undefined') {
+            const app = firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            firebaseInitialized = true;
+            console.log('Firebase inicializado com sucesso!');
+        } else {
+            console.log('Firebase não disponível, usando localStorage');
+            firebaseInitialized = false;
+        }
     } catch (error) {
         console.error('Erro ao inicializar Firebase:', error);
         firebaseInitialized = false;
@@ -1305,14 +1289,21 @@ function hideAdminPanel() {
 
 // Inicialização da aplicação
 async function initializeApp() {
-    // Inicializar Firebase
-    await initializeFirebase();
+    // Renderizar menu primeiro (sem depender do Firebase)
+    renderMenu();
+    
+    // Inicializar Firebase em background
+    try {
+        await initializeFirebase();
+        console.log('Firebase inicializado com sucesso');
+    } catch (error) {
+        console.log('Firebase não disponível, usando localStorage');
+    }
     
     // Verificar sessão existente
     checkSession();
     
-    // Renderizar menu
-    renderMenu();
+    console.log('Aplicação inicializada com sucesso');
     
     // Event listeners do carrinho
     document.getElementById('cartIcon').addEventListener('click', toggleCart);
