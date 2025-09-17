@@ -769,18 +769,7 @@ function checkout() {
         return;
     }
 
-    const checkoutForm = document.getElementById('checkoutForm');
-    const checkoutBtn = document.getElementById('checkoutBtn');
-    
-    // Se formulário não está visível, mostrar
-    if (checkoutForm.style.display === 'none') {
-        checkoutForm.style.display = 'block';
-        checkoutBtn.innerHTML = 'Enviar Pedido no WhatsApp';
-        checkoutBtn.onclick = processCheckout;
-        return;
-    }
-    
-    // Processar checkout
+    // Processar checkout diretamente
     processCheckout();
 }
 
@@ -847,7 +836,6 @@ async function processCheckout() {
     document.getElementById('customerName').value = '';
     document.getElementById('customerAddress').value = '';
     document.getElementById('customerSector').value = '';
-    document.getElementById('checkoutForm').style.display = 'none';
     
     // Resetar botão
     checkoutBtn.style.transform = 'scale(1)';
