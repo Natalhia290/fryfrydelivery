@@ -1,0 +1,24 @@
+COMO ATUALIZAR AS REGRAS DO FIREBASE:
+
+1. Abra o Firebase Console: https://console.firebase.google.com/
+2. Selecione o projeto: fryfrydelivery
+3. No menu lateral, clique em "Firestore Database"
+4. Clique na aba "Regras"
+5. APAGUE tudo que está lá
+6. COLE exatamente isto:
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+
+7. Clique em "Publicar"
+8. Aguarde aparecer "Regras publicadas com sucesso"
+9. TESTE o admin novamente!
+
+REGRAS SUPER SIMPLES - PERMITE TUDO!
