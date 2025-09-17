@@ -49,71 +49,46 @@ function generateOrderId() {
     return id;
 }
 
-// Carregar dados do Firebase e localStorage
+// Carregar dados APENAS do Firebase (100% Firebase)
 async function loadData() {
-    console.log('Carregando dados...');
+    console.log('🔄 Carregando dados APENAS do Firebase...');
     
-    // Carregar pedidos do Firebase PRIMEIRO (fonte principal)
-    if (firebaseInitialized && db) {
-        try {
-            console.log('🔄 Carregando pedidos do Firebase...');
-            
-            // Usar a versão compatível do Firebase
-            if (typeof firebase !== 'undefined') {
-                // Firebase v8 (compat)
-                const ordersRef = db.collection('orders');
-                const querySnapshot = await ordersRef.orderBy('timestamp', 'desc').get();
-                
-                orders = [];
-                querySnapshot.forEach((doc) => {
-                    orders.push(doc.data());
-                });
-            } else {
-                // Firebase v9+ (modular)
-                const { collection, getDocs, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                const ordersRef = collection(db, 'orders');
-                const q = query(ordersRef, orderBy('timestamp', 'desc'));
-                const querySnapshot = await getDocs(q);
-                
-                orders = [];
-                querySnapshot.forEach((doc) => {
-                    orders.push(doc.data());
-                });
-            }
-            
-            console.log('✅ Pedidos carregados do Firebase:', orders.length);
-            
-            // Atualizar currentOrderId baseado no maior ID existente
-            if (orders.length > 0) {
-                const maxId = Math.max(...orders.map(order => {
-                    const match = order.id.match(/FRY(\d+)DEL/);
-                    return match ? parseInt(match[1]) : 0;
-                }));
-                currentOrderId = maxId + 1;
-            }
-            
-            // Salvar no localStorage como backup
-            localStorage.setItem('fryOrders', JSON.stringify(orders));
-            console.log('💾 Backup salvo no localStorage');
-            
-        } catch (error) {
-            console.error('❌ Erro ao carregar do Firebase:', error);
-            console.log('⚠️ Fallback para localStorage');
-            // Fallback para localStorage
-            loadFromLocalStorage();
-        }
-    } else {
-        console.log('⚠️ Firebase não inicializado, carregando do localStorage');
-        loadFromLocalStorage();
+    // SEMPRE carregar do Firebase - SEM FALLBACK
+    if (!firebaseInitialized || !db) {
+        console.error('❌ Firebase não inicializado! Não é possível carregar pedidos.');
+        console.log('🔧 Verifique a configuração do Firebase');
+        orders = [];
+        return;
     }
-}
-
-// Função auxiliar para carregar do localStorage
-function loadFromLocalStorage() {
-    const savedOrders = localStorage.getItem('fryOrders');
-    if (savedOrders) {
-        orders = JSON.parse(savedOrders);
-        console.log('Pedidos carregados do localStorage:', orders.length);
+    
+    try {
+        console.log('🔄 Carregando pedidos do Firebase...');
+        
+        // Usar a versão compatível do Firebase
+        if (typeof firebase !== 'undefined') {
+            // Firebase v8 (compat)
+            const ordersRef = db.collection('orders');
+            const querySnapshot = await ordersRef.orderBy('timestamp', 'desc').get();
+            
+            orders = [];
+            querySnapshot.forEach((doc) => {
+                orders.push(doc.data());
+            });
+        } else {
+            // Firebase v9+ (modular)
+            const { collection, getDocs, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+            const ordersRef = collection(db, 'orders');
+            const q = query(ordersRef, orderBy('timestamp', 'desc'));
+            const querySnapshot = await getDocs(q);
+            
+            orders = [];
+            querySnapshot.forEach((doc) => {
+                orders.push(doc.data());
+            });
+        }
+        
+        console.log('✅ Pedidos carregados do Firebase:', orders.length);
+        
         // Atualizar currentOrderId baseado no maior ID existente
         if (orders.length > 0) {
             const maxId = Math.max(...orders.map(order => {
@@ -122,11 +97,18 @@ function loadFromLocalStorage() {
             }));
             currentOrderId = maxId + 1;
         }
-    } else {
-        console.log('Nenhum pedido encontrado no localStorage');
+        
+        // NÃO salvar no localStorage - apenas Firebase
+        console.log('🔥 Dados carregados 100% do Firebase');
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar do Firebase:', error);
+        console.log('❌ SEM FALLBACK - Firebase é obrigatório');
         orders = [];
     }
 }
+
+// Função removida - admin agora usa 100% Firebase
 
 // Carregar menu
 function loadMenuData() {
@@ -160,8 +142,8 @@ function loadMenuData() {
 
 // Salvar dados no localStorage
 function saveData() {
-    localStorage.setItem('fryOrders', JSON.stringify(orders));
-    localStorage.setItem('fryMenu', JSON.stringify(menuData));
+    // Admin não salva mais no localStorage - apenas Firebase
+    console.log('💾 Dados salvos apenas no Firebase');
 }
 
 // Atualizar estatísticas
@@ -579,65 +561,56 @@ function setupRealTimeUpdates() {
     // Verificar mudanças no Firebase a cada 3 segundos
     setInterval(async () => {
         try {
-            console.log('Verificando atualizações... Firebase inicializado:', firebaseInitialized, 'DB:', !!db);
-            if (firebaseInitialized && db) {
-                // Carregar do Firebase
-                let newOrders = [];
+            console.log('🔄 Verificando atualizações... Firebase inicializado:', firebaseInitialized, 'DB:', !!db);
+            
+            // SEMPRE usar Firebase - SEM FALLBACK
+            if (!firebaseInitialized || !db) {
+                console.error('❌ Firebase não disponível! Atualizações em tempo real desabilitadas.');
+                return;
+            }
+            
+            // Carregar do Firebase
+            let newOrders = [];
+            
+            if (typeof firebase !== 'undefined') {
+                // Firebase v8 (compat)
+                const ordersRef = db.collection('orders');
+                const querySnapshot = await ordersRef.orderBy('timestamp', 'desc').get();
                 
-                if (typeof firebase !== 'undefined') {
-                    // Firebase v8 (compat)
-                    const ordersRef = db.collection('orders');
-                    const querySnapshot = await ordersRef.orderBy('timestamp', 'desc').get();
-                    
-                    querySnapshot.forEach((doc) => {
-                        newOrders.push(doc.data());
-                    });
-                } else {
-                    // Firebase v9+ (modular)
-                    const { collection, getDocs, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                    const ordersRef = collection(db, 'orders');
-                    const q = query(ordersRef, orderBy('timestamp', 'desc'));
-                    const querySnapshot = await getDocs(q);
-                    
-                    querySnapshot.forEach((doc) => {
-                        newOrders.push(doc.data());
-                    });
-                }
-                
-                // Comparar pedidos de forma mais eficiente
-                const hasChanges = newOrders.length !== orders.length || 
-                    newOrders.some((newOrder, index) => {
-                        const oldOrder = orders[index];
-                        return !oldOrder || newOrder.id !== oldOrder.id || newOrder.updatedAt !== oldOrder.updatedAt;
-                    });
-                
-                if (hasChanges) {
-                    console.log('Novos pedidos detectados no Firebase, atualizando...', newOrders.length, 'pedidos');
-                    orders = newOrders;
-                    updateStats();
-                    const currentFilter = document.getElementById('statusFilter')?.value || 'all';
-                    renderOrders(currentFilter);
-                    
-                    // Atualizar localStorage
-                    localStorage.setItem('fryOrders', JSON.stringify(orders));
-                }
+                querySnapshot.forEach((doc) => {
+                    newOrders.push(doc.data());
+                });
             } else {
-                console.log('⚠️ Firebase não disponível, tentando localStorage...');
-                // Fallback para localStorage
-                const savedOrders = localStorage.getItem('fryOrders');
-                if (savedOrders) {
-                    const newOrders = JSON.parse(savedOrders);
-                    if (newOrders.length !== orders.length || JSON.stringify(newOrders) !== JSON.stringify(orders)) {
-                        console.log('📱 Novos pedidos detectados no localStorage, atualizando...', newOrders.length, 'pedidos');
-                        orders = newOrders;
-                        updateStats();
-                        const currentFilter = document.getElementById('statusFilter')?.value || 'all';
-                        renderOrders(currentFilter);
-                    }
-                }
+                // Firebase v9+ (modular)
+                const { collection, getDocs, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                const ordersRef = collection(db, 'orders');
+                const q = query(ordersRef, orderBy('timestamp', 'desc'));
+                const querySnapshot = await getDocs(q);
+                
+                querySnapshot.forEach((doc) => {
+                    newOrders.push(doc.data());
+                });
+            }
+            
+            // Comparar pedidos de forma mais eficiente
+            const hasChanges = newOrders.length !== orders.length || 
+                newOrders.some((newOrder, index) => {
+                    const oldOrder = orders[index];
+                    return !oldOrder || newOrder.id !== oldOrder.id || newOrder.updatedAt !== oldOrder.updatedAt;
+                });
+            
+            if (hasChanges) {
+                console.log('🔥 Novos pedidos detectados no Firebase, atualizando...', newOrders.length, 'pedidos');
+                orders = newOrders;
+                updateStats();
+                const currentFilter = document.getElementById('statusFilter')?.value || 'all';
+                renderOrders(currentFilter);
+                
+                // NÃO atualizar localStorage - apenas Firebase
+                console.log('✅ Atualização 100% do Firebase concluída');
             }
         } catch (error) {
-            console.error('Erro ao verificar pedidos:', error);
+            console.error('❌ Erro ao verificar pedidos:', error);
         }
     }, 3000);
     
