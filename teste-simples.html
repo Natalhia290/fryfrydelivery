@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Firebase Simples</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .result { margin: 20px 0; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; }
+    </style>
+</head>
+<body>
+    <h1>🔥 Teste Firebase - FRY SUSHI</h1>
+    
+    <button onclick="testar()">TESTAR FIREBASE</button>
+    <button onclick="limpar()">LIMPAR</button>
+    
+    <div id="resultado" class="result"></div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        const config = {
+            apiKey: "AIzaSyC9UzFuG_0wYjsXkNDf776RCY8X3TpcI1Q",
+            authDomain: "fryfrydelivery.firebaseapp.com",
+            projectId: "fryfrydelivery",
+            storageBucket: "fryfrydelivery.firebasestorage.app",
+            messagingSenderId: "567260128188",
+            appId: "1:567260128188:web:aac55f5a4b8944622641b9",
+            measurementId: "G-SE7XWRPSRZ"
+        };
+
+        let app, db;
+
+        function limpar() {
+            document.getElementById('resultado').innerHTML = '';
+        }
+
+        async function testar() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '🔄 Testando...';
+            
+            try {
+                // 1. Inicializar Firebase
+                app = firebase.initializeApp(config);
+                db = firebase.firestore();
+                resultado.innerHTML += '<br>✅ Firebase inicializado!';
+                
+                // 2. Salvar pedido de teste
+                const pedido = {
+                    id: 'TESTE' + Date.now(),
+                    timestamp: new Date().toISOString(),
+                    itens: [{ name: 'Teste', price: 10, quantity: 1 }],
+                    total: 10,
+                    status: 'pendente',
+                    cliente: 'Teste',
+                    telefone: '123456789'
+                };
+                
+                const docRef = await db.collection('orders').add(pedido);
+                resultado.innerHTML += '<br>✅ Pedido salvo! ID: ' + docRef.id;
+                
+                // 3. Carregar pedidos
+                const snapshot = await db.collection('orders').get();
+                resultado.innerHTML += '<br>✅ Pedidos carregados: ' + snapshot.size;
+                
+                // 4. Mostrar pedidos
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    resultado.innerHTML += '<br>📋 ' + data.id + ' - ' + data.cliente + ' - R$ ' + data.total;
+                });
+                
+                resultado.innerHTML += '<br><br>🎉 TUDO FUNCIONANDO!';
+                
+            } catch (error) {
+                resultado.innerHTML += '<br>❌ ERRO: ' + error.message;
+                resultado.innerHTML += '<br>🔍 Código: ' + error.code;
+            }
+        }
+    </script>
+</body>
+</html>

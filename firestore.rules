@@ -2,7 +2,32 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permitir tudo para desenvolvimento - REGRAS TEMPORÁRIAS
+    // Permitir leitura e escrita para pedidos (qualquer pessoa pode fazer pedidos)
+    match /orders/{orderId} {
+      allow read, write: if true;
+    }
+    
+    // Permitir leitura e escrita para imagens de produtos
+    match /produtos/{produtoId} {
+      allow read, write: if true;
+    }
+    
+    // Permitir leitura e escrita para configurações
+    match /configuracoes/{configId} {
+      allow read, write: if true;
+    }
+    
+    // Permitir leitura e escrita para estatísticas
+    match /estatisticas/{statId} {
+      allow read, write: if true;
+    }
+    
+    // Permitir leitura pública para cardápio
+    match /cardapio/{itemId} {
+      allow read, write: if true;
+    }
+    
+    // Permitir leitura e escrita para qualquer documento (fallback)
     match /{document=**} {
       allow read, write: if true;
     }

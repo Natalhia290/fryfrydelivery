@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste de Pedido - FRY SUSHI</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f0f0f0; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        button { padding: 15px 30px; margin: 10px; background: #e74c3c; color: white; border: none; cursor: pointer; border-radius: 5px; font-size: 16px; }
+        button:hover { background: #c0392b; }
+        .result { margin: 20px 0; padding: 15px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; }
+        .success { color: #27ae60; font-weight: bold; }
+        .error { color: #e74c3c; font-weight: bold; }
+        .info { color: #3498db; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍣 Teste de Pedido - FRY SUSHI</h1>
+        <p>Este teste simula um cliente fazendo um pedido</p>
+        
+        <button onclick="fazerPedido()">FAZER PEDIDO DE TESTE</button>
+        <button onclick="verificarPedidos()">VERIFICAR PEDIDOS NO FIREBASE</button>
+        <button onclick="limpar()">LIMPAR</button>
+        
+        <div id="resultado" class="result"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        const resultado = document.getElementById('resultado');
+        
+        function limpar() {
+            resultado.innerHTML = '';
+        }
+
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyC9UzFuG_0wYjsXkNDf776RCY8X3TpcI1Q",
+            authDomain: "fryfrydelivery.firebaseapp.com",
+            projectId: "fryfrydelivery",
+            storageBucket: "fryfrydelivery.firebasestorage.app",
+            messagingSenderId: "567260128188",
+            appId: "1:567260128188:web:aac55f5a4b8944622641b9",
+            measurementId: "G-SE7XWRPSRZ"
+        };
+
+        let app, db, firebaseInitialized = false;
+
+        // Inicializar Firebase
+        async function initFirebase() {
+            try {
+                app = firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                firebaseInitialized = true;
+                resultado.innerHTML += '<div class="success">✅ Firebase inicializado com sucesso!</div>';
+                return true;
+            } catch (error) {
+                resultado.innerHTML += '<div class="error">❌ Erro ao inicializar Firebase: ' + error.message + '</div>';
+                return false;
+            }
+        }
+
+        // Fazer pedido (simula cliente)
+        async function fazerPedido() {
+            resultado.innerHTML = '<div class="info">🔄 Fazendo pedido de teste...</div>';
+            
+            // Inicializar Firebase se não estiver
+            if (!firebaseInitialized) {
+                const initSuccess = await initFirebase();
+                if (!initSuccess) return;
+            }
+            
+            try {
+                // Simular pedido de cliente
+                const pedido = {
+                    id: 'FRY' + Date.now() + 'DEL',
+                    timestamp: new Date().toISOString(),
+                    itens: [
+                        { id: 1, name: 'Big Hot de Tilápia', price: 49.90, quantity: 2 },
+                        { id: 2, name: 'Temaki de Salmão', price: 25.90, quantity: 1 }
+                    ],
+                    total: 125.70,
+                    status: 'pendente',
+                    cliente: 'Cliente Teste',
+                    telefone: '(62) 99999-9999',
+                    notes: 'Pedido de teste - Cliente normal',
+                    updatedAt: new Date().toISOString()
+                };
+                
+                // Salvar no Firebase
+                const docRef = await db.collection('orders').add(pedido);
+                
+                resultado.innerHTML += '<div class="success">✅ Pedido salvo no Firebase!</div>';
+                resultado.innerHTML += '<div class="info">📄 ID do documento: ' + docRef.id + '</div>';
+                resultado.innerHTML += '<div class="info">🆔 ID do pedido: ' + pedido.id + '</div>';
+                resultado.innerHTML += '<div class="info">💰 Total: R$ ' + pedido.total + '</div>';
+                resultado.innerHTML += '<div class="info">👤 Cliente: ' + pedido.cliente + '</div>';
+                
+                // Salvar no localStorage também
+                const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
+                orders.unshift(pedido);
+                localStorage.setItem('fryOrders', JSON.stringify(orders));
+                
+                resultado.innerHTML += '<div class="success">✅ Pedido salvo no localStorage também!</div>';
+                resultado.innerHTML += '<div class="success">🎉 PEDIDO CRIADO COM SUCESSO!</div>';
+                
+            } catch (error) {
+                resultado.innerHTML += '<div class="error">❌ Erro ao salvar pedido: ' + error.message + '</div>';
+                resultado.innerHTML += '<div class="error">🔍 Código: ' + error.code + '</div>';
+            }
+        }
+
+        // Verificar pedidos no Firebase
+        async function verificarPedidos() {
+            if (!firebaseInitialized) {
+                const initSuccess = await initFirebase();
+                if (!initSuccess) return;
+            }
+            
+            resultado.innerHTML = '<div class="info">🔄 Verificando pedidos no Firebase...</div>';
+            
+            try {
+                const snapshot = await db.collection('orders').orderBy('timestamp', 'desc').get();
+                
+                resultado.innerHTML += '<div class="success">✅ Pedidos encontrados: ' + snapshot.size + '</div>';
+                
+                if (snapshot.empty) {
+                    resultado.innerHTML += '<div class="error">⚠️ Nenhum pedido encontrado</div>';
+                } else {
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        resultado.innerHTML += '<div class="info">📋 ' + data.id + ' - ' + data.cliente + ' - R$ ' + data.total + ' - ' + data.status + '</div>';
+                    });
+                }
+                
+            } catch (error) {
+                resultado.innerHTML += '<div class="error">❌ Erro ao carregar pedidos: ' + error.message + '</div>';
+            }
+        }
+
+        // Auto-inicializar
+        window.onload = function() {
+            resultado.innerHTML = '<div class="info">🚀 Teste de Pedido iniciado</div>';
+            resultado.innerHTML += '<div class="info">📋 Clique em "FAZER PEDIDO DE TESTE" para simular um cliente</div>';
+        };
+    </script>
+</body>
+</html>

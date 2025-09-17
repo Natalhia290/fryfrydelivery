@@ -1,0 +1,37 @@
+🔥 COMO RESOLVER O PROBLEMA - PASSO A PASSO
+
+1. ABRA O FIREBASE CONSOLE:
+   https://console.firebase.google.com/
+
+2. SELECIONE O PROJETO:
+   fryfrydelivery
+
+3. VÁ PARA FIRESTORE DATABASE:
+   Menu lateral > Firestore Database
+
+4. CLIQUE NA ABA "REGRAS":
+   No topo da página
+
+5. COLE ESTAS REGRAS EXATAS:
+   rules_version = '2';
+
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       // Permitir tudo para desenvolvimento - REGRAS TEMPORÁRIAS
+       match /{document=**} {
+         allow read, write: if true;
+       }
+     }
+   }
+
+6. CLIQUE EM "PUBLICAR"
+
+7. TESTE:
+   http://127.0.0.1:3000/teste-simples.html
+   Clique em "TESTAR FIREBASE"
+
+8. SE FUNCIONAR:
+   O painel admin vai mostrar os pedidos!
+
+IMPORTANTE: As regras antigas estão bloqueando o acesso!
+Você DEVE atualizar as regras no Firebase Console!
