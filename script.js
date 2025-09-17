@@ -298,11 +298,18 @@ function setupEventListeners() {
 
 // Renderização do menu com animações dinâmicas
 function renderMenu() {
+    const menuGridElement = document.getElementById('menuGrid');
+    
+    if (!menuGridElement) {
+        console.error('Elemento menuGrid não encontrado!');
+        return;
+    }
+    
     // Adicionar efeito de loading
-    menuGrid.innerHTML = '<div class="loading-spinner">Carregando cardápio...</div>';
+    menuGridElement.innerHTML = '<div class="loading-spinner">Carregando cardápio...</div>';
     
     setTimeout(() => {
-        menuGrid.innerHTML = '';
+        menuGridElement.innerHTML = '';
         
         let productsToShow = [];
         
@@ -314,9 +321,11 @@ function renderMenu() {
             productsToShow = menuData[currentFilter] || [];
         }
 
+        console.log('Produtos para mostrar:', productsToShow.length);
+
         productsToShow.forEach((product, index) => {
             const productElement = createProductElement(product, index);
-            menuGrid.appendChild(productElement);
+            menuGridElement.appendChild(productElement);
             
             // Animação de entrada escalonada
             setTimeout(() => {
@@ -1271,15 +1280,23 @@ function checkSession() {
 }
 
 function showAdminPanel() {
+    console.log('showAdminPanel chamada, isAuthenticated:', isAuthenticated);
+    
     if (!isAuthenticated) {
+        console.log('Usuário não autenticado, mostrando modal de login');
         showLoginModal();
         return;
     }
     
+    console.log('Usuário autenticado, mostrando painel admin');
     const adminPanel = document.getElementById('adminPanel');
-    adminPanel.classList.add('active');
-    updateAdminStats();
-    loadRecentOrders();
+    if (adminPanel) {
+        adminPanel.classList.add('active');
+        updateAdminStats();
+        loadRecentOrders();
+    } else {
+        console.error('adminPanel não encontrado!');
+    }
 }
 
 function hideAdminPanel() {
@@ -1289,6 +1306,15 @@ function hideAdminPanel() {
 
 // Inicialização da aplicação
 async function initializeApp() {
+    console.log('Iniciando aplicação...');
+    
+    // Verificar se elementos existem
+    const menuGrid = document.getElementById('menuGrid');
+    const loginForm = document.getElementById('loginForm');
+    
+    console.log('menuGrid encontrado:', !!menuGrid);
+    console.log('loginForm encontrado:', !!loginForm);
+    
     // Renderizar menu primeiro (sem depender do Firebase)
     renderMenu();
     
@@ -1306,10 +1332,15 @@ async function initializeApp() {
     console.log('Aplicação inicializada com sucesso');
     
     // Event listeners do carrinho
-    document.getElementById('cartIcon').addEventListener('click', toggleCart);
-    document.getElementById('cartClose').addEventListener('click', toggleCart);
-    document.getElementById('cartOverlay').addEventListener('click', toggleCart);
-    document.getElementById('checkoutBtn').addEventListener('click', checkout);
+    const cartIcon = document.getElementById('cartIcon');
+    const cartClose = document.getElementById('cartClose');
+    const cartOverlay = document.getElementById('cartOverlay');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    
+    if (cartIcon) cartIcon.addEventListener('click', toggleCart);
+    if (cartClose) cartClose.addEventListener('click', toggleCart);
+    if (cartOverlay) cartOverlay.addEventListener('click', toggleCart);
+    if (checkoutBtn) checkoutBtn.addEventListener('click', checkout);
     
     // Event listeners dos filtros
     document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -1324,14 +1355,34 @@ async function initializeApp() {
     });
     
     // Event listeners do painel admin
-    document.getElementById('adminToggle').addEventListener('click', showAdminPanel);
-    document.getElementById('adminClose').addEventListener('click', hideAdminPanel);
-    document.getElementById('logoutBtn').addEventListener('click', logout);
+    const adminToggle = document.getElementById('adminToggle');
+    const adminClose = document.getElementById('adminClose');
+    const logoutBtn = document.getElementById('logoutBtn');
+    
+    if (adminToggle) {
+        console.log('Adicionando event listener ao adminToggle');
+        adminToggle.addEventListener('click', showAdminPanel);
+    } else {
+        console.error('adminToggle não encontrado!');
+    }
+    
+    if (adminClose) adminClose.addEventListener('click', hideAdminPanel);
+    if (logoutBtn) logoutBtn.addEventListener('click', logout);
     
     // Event listeners do modal de login
-    document.getElementById('loginForm').addEventListener('submit', login);
-    document.getElementById('loginClose').addEventListener('click', hideLoginModal);
-    document.getElementById('loginOverlay').addEventListener('click', hideLoginModal);
+    const loginForm = document.getElementById('loginForm');
+    const loginClose = document.getElementById('loginClose');
+    const loginOverlay = document.getElementById('loginOverlay');
+    
+    if (loginForm) {
+        console.log('Adicionando event listener ao loginForm');
+        loginForm.addEventListener('submit', login);
+    } else {
+        console.error('loginForm não encontrado!');
+    }
+    
+    if (loginClose) loginClose.addEventListener('click', hideLoginModal);
+    if (loginOverlay) loginOverlay.addEventListener('click', hideLoginModal);
     
     // Máscara para telefone
     const phoneInput = document.getElementById('customerPhone');
