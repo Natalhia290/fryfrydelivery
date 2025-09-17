@@ -1,0 +1,20 @@
+REGRAS DEFINITIVAS DO FIREBASE - COPIE E COLE NO CONSOLE:
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+
+INSTRUÇÕES:
+1. Abra: https://console.firebase.google.com/
+2. Selecione: fryfrydelivery
+3. Clique: Firestore Database → Regras
+4. APAGUE tudo que está lá
+5. COLE as regras acima
+6. Clique: Publicar
+7. PRONTO! Admin vai funcionar!
