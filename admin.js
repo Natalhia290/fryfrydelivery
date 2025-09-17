@@ -123,6 +123,11 @@ async function loadData() {
         // NÃO salvar no localStorage - apenas Firebase
         console.log('🔥 Dados carregados 100% do Firebase');
         
+        // RENDERIZAR PEDIDOS IMEDIATAMENTE
+        console.log('🎨 Renderizando pedidos na tela...');
+        renderOrders('all');
+        updateStats();
+        
     } catch (error) {
         console.error('❌ Erro ao carregar do Firebase:', error);
         console.log('❌ SEM FALLBACK - Firebase é obrigatório');
@@ -193,11 +198,17 @@ function updateStats() {
 
 // Renderizar pedidos
 function renderOrders(filter = 'all') {
+    console.log('🎨 INICIANDO RENDERIZAÇÃO DE PEDIDOS...');
+    console.log('📊 Total de pedidos na memória:', orders.length);
+    console.log('🔍 Filtro aplicado:', filter);
+    
     const pedidosList = document.getElementById('pedidosList');
     if (!pedidosList) {
-        console.error('Elemento pedidosList não encontrado');
+        console.error('❌ Elemento pedidosList não encontrado!');
         return;
     }
+    
+    console.log('✅ Elemento pedidosList encontrado');
     
     let filteredOrders = orders || [];
     
@@ -205,15 +216,19 @@ function renderOrders(filter = 'all') {
         filteredOrders = orders.filter(order => order.status === filter);
     }
     
-    console.log('Renderizando pedidos:', filteredOrders.length, 'filtro:', filter);
+    console.log('📊 Pedidos filtrados:', filteredOrders.length);
+    console.log('📋 Lista de pedidos para renderizar:', filteredOrders.map(o => o.id));
     
     // Ordenar por data (mais recentes primeiro)
     filteredOrders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     
     if (filteredOrders.length === 0) {
+        console.log('⚠️ Nenhum pedido encontrado para renderizar');
         pedidosList.innerHTML = '<div class="no-orders">Nenhum pedido encontrado</div>';
         return;
     }
+    
+    console.log('🎨 Renderizando', filteredOrders.length, 'pedidos na tela...');
     
     pedidosList.innerHTML = filteredOrders.map(order => `
         <div class="order-card">
@@ -254,6 +269,8 @@ function renderOrders(filter = 'all') {
             </div>
         </div>
     `).join('');
+    
+    console.log('✅ Pedidos renderizados com sucesso na tela!');
 }
 
 // Renderizar cardápio
@@ -550,7 +567,7 @@ async function initializeAdmin() {
     
     // Renderizar conteúdo inicial
     updateStats();
-    renderOrders();
+    renderOrders('all');
     renderCardapio();
     renderProductPhotos();
     
