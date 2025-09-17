@@ -19,26 +19,23 @@ const firebaseConfig = {
 // Inicializar Firebase
 async function initializeFirebase() {
     try {
+        console.log('🔄 Inicializando Firebase...');
+        
         if (typeof firebase !== 'undefined') {
+            // Firebase v8 (compat) - já carregado no HTML
+            console.log('🔥 Usando Firebase v8 (compat)');
             const app = firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
             firebaseInitialized = true;
-            console.log('Firebase inicializado com sucesso!');
+            console.log('✅ Firebase v8 inicializado com sucesso!');
         } else {
-            // Tentar carregar Firebase dinamicamente
-            console.log('Carregando Firebase dinamicamente...');
-            const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
-            const { getFirestore } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-            
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            firebaseInitialized = true;
-            console.log('Firebase carregado dinamicamente com sucesso!');
+            console.error('❌ Firebase não encontrado! Verifique se os scripts estão carregados.');
+            firebaseInitialized = false;
+            return;
         }
     } catch (error) {
-        console.error('Erro ao inicializar Firebase:', error);
+        console.error('❌ Erro ao inicializar Firebase:', error);
         firebaseInitialized = false;
-        console.log('Usando localStorage como fallback');
     }
 }
 
@@ -64,28 +61,15 @@ async function loadData() {
     try {
         console.log('🔄 Carregando pedidos do Firebase...');
         
-        // Usar a versão compatível do Firebase
-        if (typeof firebase !== 'undefined') {
-            // Firebase v8 (compat)
-            const ordersRef = db.collection('orders');
-            const querySnapshot = await ordersRef.orderBy('timestamp', 'desc').get();
-            
-            orders = [];
-            querySnapshot.forEach((doc) => {
-                orders.push(doc.data());
-            });
-        } else {
-            // Firebase v9+ (modular)
-            const { collection, getDocs, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-            const ordersRef = collection(db, 'orders');
-            const q = query(ordersRef, orderBy('timestamp', 'desc'));
-            const querySnapshot = await getDocs(q);
-            
-            orders = [];
-            querySnapshot.forEach((doc) => {
-                orders.push(doc.data());
-            });
-        }
+        // Usar Firebase v8 (compat) - sempre
+        console.log('🔥 Carregando pedidos do Firebase v8...');
+        const ordersRef = db.collection('orders');
+        const querySnapshot = await ordersRef.orderBy('timestamp', 'desc').get();
+        
+        orders = [];
+        querySnapshot.forEach((doc) => {
+            orders.push(doc.data());
+        });
         
         console.log('✅ Pedidos carregados do Firebase:', orders.length);
         
@@ -290,42 +274,26 @@ async function saveOrderEdit() {
         order.notes = notes;
         order.updatedAt = new Date().toISOString();
         
-        // Salvar no Firebase se estiver disponível
+        // Salvar no Firebase v8 (compat)
         if (firebaseInitialized && db) {
             try {
-                if (typeof firebase !== 'undefined') {
-                    // Firebase v8 (compat)
-                    const ordersRef = db.collection('orders');
-                    const querySnapshot = await ordersRef.where('id', '==', orderId).get();
-                    
-                    if (!querySnapshot.empty) {
-                        const doc = querySnapshot.docs[0];
-                        await doc.ref.update({
-                            status: newStatus,
-                            notes: notes,
-                            updatedAt: order.updatedAt
-                        });
-                        console.log('Pedido atualizado no Firebase (v8)');
-                    }
+                console.log('🔄 Atualizando pedido no Firebase...');
+                const ordersRef = db.collection('orders');
+                const querySnapshot = await ordersRef.where('id', '==', orderId).get();
+                
+                if (!querySnapshot.empty) {
+                    const doc = querySnapshot.docs[0];
+                    await doc.ref.update({
+                        status: newStatus,
+                        notes: notes,
+                        updatedAt: order.updatedAt
+                    });
+                    console.log('✅ Pedido atualizado no Firebase v8');
                 } else {
-                    // Firebase v9+ (modular)
-                    const { collection, query, where, getDocs, updateDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                    const ordersRef = collection(db, 'orders');
-                    const q = query(ordersRef, where('id', '==', orderId));
-                    const querySnapshot = await getDocs(q);
-                    
-                    if (!querySnapshot.empty) {
-                        const doc = querySnapshot.docs[0];
-                        await updateDoc(doc.ref, {
-                            status: newStatus,
-                            notes: notes,
-                            updatedAt: order.updatedAt
-                        });
-                        console.log('Pedido atualizado no Firebase (v9+)');
-                    }
+                    console.log('⚠️ Pedido não encontrado no Firebase');
                 }
             } catch (error) {
-                console.error('Erro ao atualizar no Firebase:', error);
+                console.error('❌ Erro ao atualizar no Firebase:', error);
             }
         }
         
@@ -569,28 +537,18 @@ function setupRealTimeUpdates() {
                 return;
             }
             
-            // Carregar do Firebase
+            // Carregar do Firebase v8 (compat)
             let newOrders = [];
+            console.log('🔄 Verificando pedidos no Firebase...');
             
-            if (typeof firebase !== 'undefined') {
-                // Firebase v8 (compat)
-                const ordersRef = db.collection('orders');
-                const querySnapshot = await ordersRef.orderBy('timestamp', 'desc').get();
-                
-                querySnapshot.forEach((doc) => {
-                    newOrders.push(doc.data());
-                });
-            } else {
-                // Firebase v9+ (modular)
-                const { collection, getDocs, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                const ordersRef = collection(db, 'orders');
-                const q = query(ordersRef, orderBy('timestamp', 'desc'));
-                const querySnapshot = await getDocs(q);
-                
-                querySnapshot.forEach((doc) => {
-                    newOrders.push(doc.data());
-                });
-            }
+            const ordersRef = db.collection('orders');
+            const querySnapshot = await ordersRef.orderBy('timestamp', 'desc').get();
+            
+            querySnapshot.forEach((doc) => {
+                newOrders.push(doc.data());
+            });
+            
+            console.log('📊 Pedidos encontrados no Firebase:', newOrders.length);
             
             // Comparar pedidos de forma mais eficiente
             const hasChanges = newOrders.length !== orders.length || 
