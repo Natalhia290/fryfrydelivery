@@ -1004,8 +1004,8 @@ async function saveOrderToFirebase(customerName, customerPhone) {
     // Salvar no Firebase se estiver disponível
     if (firebaseInitialized && db) {
         try {
-            const { collection, addDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-            const docRef = await addDoc(collection(db, 'orders'), order);
+            // Usar Firebase v8 (compat) para consistência
+            const docRef = await db.collection('orders').add(order);
             console.log('Pedido salvo no Firebase com ID:', docRef.id);
             console.log('Dados do pedido:', order);
         } catch (error) {
@@ -1014,8 +1014,7 @@ async function saveOrderToFirebase(customerName, customerPhone) {
             // Tentar novamente após 2 segundos
             setTimeout(async () => {
                 try {
-                    const { collection, addDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                    await addDoc(collection(db, 'orders'), order);
+                    await db.collection('orders').add(order);
                     console.log('Pedido salvo no Firebase na segunda tentativa');
                 } catch (retryError) {
                     console.error('Erro na segunda tentativa:', retryError);

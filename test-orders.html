@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Pedidos</title>
+</head>
+<body>
+    <h1>Teste de Pedidos Firebase</h1>
+    <button onclick="testSaveOrder()">Salvar Pedido de Teste</button>
+    <button onclick="testLoadOrders()">Carregar Pedidos</button>
+    <div id="result"></div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyC9UzFuG_0wYjsXkNDf776RCY8X3TpcI1Q",
+            authDomain: "fryfrydelivery.firebaseapp.com",
+            projectId: "fryfrydelivery",
+            storageBucket: "fryfrydelivery.firebasestorage.app",
+            messagingSenderId: "567260128188",
+            appId: "1:567260128188:web:aac55f5a4b8944622641b9",
+            measurementId: "G-SE7XWRPSRZ"
+        };
+
+        // Inicializar Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        async function testSaveOrder() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Salvando pedido de teste...';
+            
+            try {
+                const testOrder = {
+                    id: 'FRY' + Date.now() + 'DEL',
+                    timestamp: new Date().toISOString(),
+                    itens: [
+                        { id: 1, name: 'Big Hot de Tilápia', price: 49.90, quantity: 2 }
+                    ],
+                    total: 99.80,
+                    status: 'pendente',
+                    cliente: 'Cliente Teste',
+                    telefone: '(62) 99999-9999',
+                    notes: 'Pedido de teste',
+                    updatedAt: new Date().toISOString()
+                };
+                
+                const docRef = await db.collection('orders').add(testOrder);
+                resultDiv.innerHTML = `
+                    <h3>✅ Pedido salvo com sucesso!</h3>
+                    <p>ID do documento: ${docRef.id}</p>
+                    <p>ID do pedido: ${testOrder.id}</p>
+                    <pre>${JSON.stringify(testOrder, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3>❌ Erro ao salvar pedido:</h3>
+                    <p>${error.message}</p>
+                    <pre>${error.stack}</pre>
+                `;
+            }
+        }
+
+        async function testLoadOrders() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Carregando pedidos...';
+            
+            try {
+                const snapshot = await db.collection('orders').orderBy('timestamp', 'desc').get();
+                
+                let orders = [];
+                snapshot.forEach(doc => {
+                    orders.push(doc.data());
+                });
+                
+                resultDiv.innerHTML = `
+                    <h3>✅ Pedidos carregados!</h3>
+                    <p>Total de pedidos: ${orders.length}</p>
+                    <pre>${JSON.stringify(orders, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3>❌ Erro ao carregar pedidos:</h3>
+                    <p>${error.message}</p>
+                    <pre>${error.stack}</pre>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
