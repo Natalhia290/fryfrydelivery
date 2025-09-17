@@ -234,12 +234,11 @@ const menuData = {
         },
         {
             id: 3,
-            name: "40 Hots Filadélfia",
-            description: "40 irresistíveis e deliciosos hots. (De R$ 80,00 por R$ 40,00)",
-            price: 40.00,
+            name: "Big Hot Turbo",
+            description: "O mais poderoso dos hots! Super recheado e irresistível.",
+            price: 69.90,
             emoji: "🍣",
-            category: "bigHots",
-            outOfStock: true
+            category: "bigHots"
         }
     ],
     miniSushiDog: [
