@@ -1286,6 +1286,28 @@ body {
     box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
 }
 
+.form-group select {
+    padding: 0.8rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #fafafa;
+    cursor: pointer;
+}
+
+.form-group select:focus {
+    outline: none;
+    border-color: var(--coral);
+    background: var(--white);
+    box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+}
+
+.form-group select option {
+    padding: 8px;
+    background: var(--white);
+}
+
 .login-btn {
     background: linear-gradient(135deg, var(--coral), #ff5252);
     color: var(--white);

@@ -787,10 +787,12 @@ function checkout() {
 async function processCheckout() {
     const customerPhone = document.getElementById('customerPhone').value;
     const customerName = document.getElementById('customerName').value;
+    const customerAddress = document.getElementById('customerAddress').value;
+    const customerSector = document.getElementById('customerSector').value;
     const checkoutBtn = document.getElementById('checkoutBtn');
     
     // Validar campos
-    if (!customerPhone || !customerName) {
+    if (!customerPhone || !customerName || !customerAddress || !customerSector) {
         showNotification('Por favor, preencha todos os campos!', 'error');
         return;
     }
@@ -843,6 +845,8 @@ async function processCheckout() {
     // Resetar formulário
     document.getElementById('customerPhone').value = '';
     document.getElementById('customerName').value = '';
+    document.getElementById('customerAddress').value = '';
+    document.getElementById('customerSector').value = '';
     document.getElementById('checkoutForm').style.display = 'none';
     
     // Resetar botão
@@ -968,7 +972,9 @@ function sendWhatsAppMessage(customerPhone, message) {
         // Criar mensagem com dados do cliente
         const customerMessage = `Olá! Quero fazer um pedido!\n\n` +
                               `👤 *Meu nome:* ${document.getElementById('customerName').value}\n` +
-                              `📱 *Meu WhatsApp:* ${customerPhone}\n\n` +
+                              `📱 *Meu WhatsApp:* ${customerPhone}\n` +
+                              `🏠 *Endereço:* ${document.getElementById('customerAddress').value}\n` +
+                              `📍 *Setor:* ${document.getElementById('customerSector').value}\n\n` +
                               `📋 *MEU PEDIDO:*\n${message}`;
         
         // Criar URL do WhatsApp da loja
@@ -997,10 +1003,17 @@ function generateCustomerOrderMessage(customerName) {
     const now = new Date();
     const orderId = generateOrderId();
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const customerAddress = document.getElementById('customerAddress').value;
+    const customerSector = document.getElementById('customerSector').value;
     
     let message = '🍣 *PEDIDO FRY - Sushi Delivery* 🍣\n\n';
     message += `📋 *PEDIDO #${orderId}*\n`;
     message += `🕐 ${now.toLocaleString('pt-BR')}\n\n`;
+    
+    message += '👤 *DADOS DO CLIENTE:*\n';
+    message += `• Nome: ${customerName}\n`;
+    message += `• Endereço: ${customerAddress}\n`;
+    message += `• Setor: ${customerSector}\n\n`;
     
     message += '🍱 *ITENS DO PEDIDO:*\n';
     cart.forEach((item, index) => {
@@ -1050,6 +1063,9 @@ function generateOrderId() {
 
 // Salvar pedido no Firebase e localStorage
 async function saveOrderToFirebase(customerName, customerPhone) {
+    const customerAddress = document.getElementById('customerAddress').value;
+    const customerSector = document.getElementById('customerSector').value;
+    
     const order = {
         id: generateOrderId(),
         timestamp: new Date().toISOString(),
@@ -1058,6 +1074,8 @@ async function saveOrderToFirebase(customerName, customerPhone) {
         status: 'pendente',
         cliente: customerName,
         telefone: customerPhone,
+        endereco: customerAddress,
+        setor: customerSector,
         notes: '',
         updatedAt: new Date().toISOString()
     };
@@ -1812,7 +1830,7 @@ function showUploadStatus(message, type) {
 
 // Função para rolar até o menu
 function scrollToMenu() {
-    const menuSection = document.getElementById('menu');
+    const menuSection = document.getElementById('cardapio');
     if (menuSection) {
         menuSection.scrollIntoView({ 
             behavior: 'smooth',
