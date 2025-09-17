@@ -7,6 +7,40 @@ const authConfig = {
 let isAuthenticated = false;
 let sessionTimeout = null;
 
+// Função para obter imagem do produto
+function getProductImage(product) {
+    const imageMap = {
+        // Big Hots
+        1: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd1871?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Tilápia
+        2: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Salmão
+        3: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Filadélfia
+        
+        // Mini Sushi Dog
+        4: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Salmão
+        5: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Tilápia
+        
+        // Combos
+        6: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd1871?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Combo Tilápia
+        7: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Combo Salmão
+        8: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Individual Salmão
+        9: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Individual Tilápia
+        
+        // Bebidas
+        10: 'https://images.unsplash.com/photo-1548839140-5d4b0b0b0b0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Água
+        11: 'https://images.unsplash.com/photo-1548839140-5d4b0b0b0b0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Refrigerante
+        12: 'https://images.unsplash.com/photo-1548839140-5d4b0b0b0b0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Suco
+        13: 'https://images.unsplash.com/photo-1548839140-5d4b0b0b0b0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Cerveja
+        
+        // Adicionais
+        14: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Molho
+        15: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Gengibre
+        16: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80', // Wasabi
+        17: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'  // Shoyu
+    };
+    
+    return imageMap[product.id] || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
+}
+
 // Dados dos produtos do cardápio FRY
 const menuData = {
     bigHots: [
@@ -277,9 +311,15 @@ function createProductElement(product, index) {
     div.style.transform = 'translateY(30px)';
     div.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     
+    // Definir imagem baseada na categoria e nome do produto
+    const imageUrl = getProductImage(product);
+    
     div.innerHTML = `
         <div class="menu-item-image">
-            ${product.emoji}
+            <img src="${imageUrl}" alt="${product.name}" loading="lazy">
+            <div class="image-overlay">
+                ${product.emoji}
+            </div>
         </div>
         <div class="menu-item-content">
             <h3 class="menu-item-name">${product.name}</h3>
@@ -433,7 +473,8 @@ function updateCartItems() {
     cartItems.innerHTML = cart.map(item => `
         <div class="cart-item">
             <div class="cart-item-image">
-                ${item.emoji}
+                <img src="${getProductImage(item)}" alt="${item.name}" loading="lazy">
+                <div class="cart-emoji">${item.emoji}</div>
             </div>
             <div class="cart-item-info">
                 <div class="cart-item-name">${item.name}</div>
