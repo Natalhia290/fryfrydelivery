@@ -136,6 +136,32 @@ const menuData = {
             emoji: "🥤",
             category: "bebidas"
         }
+    ],
+    adicionais: [
+        {
+            id: 16,
+            name: "Hashi (Pauzinhos)",
+            description: "Pauzinhos tradicionais japoneses",
+            price: 1.00,
+            emoji: "🥢",
+            category: "adicionais"
+        },
+        {
+            id: 17,
+            name: "Molho Tarê",
+            description: "Molho doce tradicional japonês",
+            price: 1.50,
+            emoji: "🍯",
+            category: "adicionais"
+        },
+        {
+            id: 18,
+            name: "Molho Shoyo",
+            description: "Molho de soja tradicional",
+            price: 1.50,
+            emoji: "🫗",
+            category: "adicionais"
+        }
     ]
 };
 
@@ -790,11 +816,25 @@ async function saveOrderToFirebase(customerName, customerPhone) {
     if (firebaseInitialized && db) {
         try {
             const { collection, addDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-            await addDoc(collection(db, 'orders'), order);
-            console.log('Pedido salvo no Firebase:', order.id);
+            const docRef = await addDoc(collection(db, 'orders'), order);
+            console.log('Pedido salvo no Firebase com ID:', docRef.id);
+            console.log('Dados do pedido:', order);
         } catch (error) {
             console.error('Erro ao salvar no Firebase:', error);
+            console.log('Tentando novamente em 2 segundos...');
+            // Tentar novamente após 2 segundos
+            setTimeout(async () => {
+                try {
+                    const { collection, addDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                    await addDoc(collection(db, 'orders'), order);
+                    console.log('Pedido salvo no Firebase na segunda tentativa');
+                } catch (retryError) {
+                    console.error('Erro na segunda tentativa:', retryError);
+                }
+            }, 2000);
         }
+    } else {
+        console.log('Firebase não inicializado, salvando apenas no localStorage');
     }
     
     // Notificar administrador

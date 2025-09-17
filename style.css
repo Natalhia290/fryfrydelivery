@@ -198,8 +198,34 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, var(--coral) 0%, var(--dark-purple) 100%);
+    background: linear-gradient(135deg, #ff6b6b 0%, #2b2d42 50%, #1a1a2e 100%);
     z-index: -1;
+}
+
+.cherry-blossoms {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        radial-gradient(circle at 20% 20%, rgba(255, 182, 193, 0.3) 0%, transparent 20%),
+        radial-gradient(circle at 80% 80%, rgba(255, 192, 203, 0.2) 0%, transparent 25%),
+        radial-gradient(circle at 40% 60%, rgba(255, 218, 224, 0.4) 0%, transparent 15%),
+        radial-gradient(circle at 60% 30%, rgba(255, 182, 193, 0.2) 0%, transparent 20%);
+    animation: cherryBlossom 20s ease-in-out infinite;
+}
+
+.japanese-trees {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        linear-gradient(45deg, transparent 30%, rgba(0, 100, 0, 0.1) 30%, rgba(0, 100, 0, 0.1) 70%, transparent 70%),
+        linear-gradient(-45deg, transparent 30%, rgba(0, 80, 0, 0.1) 30%, rgba(0, 80, 0, 0.1) 70%, transparent 70%);
+    animation: treeSway 15s ease-in-out infinite;
 }
 
 .hero-bg::before {
@@ -228,8 +254,45 @@ body {
 
 .hero-subtitle {
     font-size: 1.3rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     opacity: 0.9;
+}
+
+.hero-description {
+    margin-bottom: 2rem;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1.5rem;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hero-description p {
+    margin-bottom: 0.8rem;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.hero-description p:last-child {
+    margin-bottom: 0;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.ifood-btn {
+    background: linear-gradient(135deg, #ea1d2c, #ff6b35) !important;
+    color: white !important;
+}
+
+.ifood-btn:hover {
+    background: linear-gradient(135deg, #ff6b35, #ea1d2c) !important;
+    transform: translateY(-2px);
 }
 
 .cta-button {
@@ -612,10 +675,36 @@ body {
     color: var(--dark-purple);
 }
 
-.contact-map {
+.contact-info-extended {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.contact-info-extended .contact-item {
+    background: var(--white);
+    padding: 2rem;
     border-radius: 15px;
-    overflow: hidden;
     box-shadow: var(--shadow);
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.contact-info-extended .contact-item:hover {
+    transform: translateY(-5px);
+}
+
+.contact-info-extended .contact-item h3 {
+    color: var(--coral);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.contact-info-extended .contact-item p {
+    color: var(--gray);
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
 }
 
 .contact-map iframe {
@@ -1051,6 +1140,58 @@ body {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+@keyframes cherryBlossom {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0.3;
+    }
+    25% {
+        transform: translateY(-10px) rotate(1deg);
+        opacity: 0.5;
+    }
+    50% {
+        transform: translateY(-5px) rotate(-1deg);
+        opacity: 0.4;
+    }
+    75% {
+        transform: translateY(-15px) rotate(0.5deg);
+        opacity: 0.6;
+    }
+}
+
+@keyframes treeSway {
+    0%, 100% {
+        transform: translateX(0) rotate(0deg);
+    }
+    25% {
+        transform: translateX(2px) rotate(0.5deg);
+    }
+    50% {
+        transform: translateX(-1px) rotate(-0.3deg);
+    }
+    75% {
+        transform: translateX(1px) rotate(0.2deg);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
     }
 }
 
