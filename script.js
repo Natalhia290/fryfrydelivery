@@ -236,7 +236,7 @@ const menuData = {
             id: 3,
             name: "Big Hot Turbo",
             description: "O mais poderoso dos hots! Super recheado e irresistível.",
-            price: 89.90,
+            price: 59.90,
             emoji: "🍣",
             category: "bigHots"
         }
