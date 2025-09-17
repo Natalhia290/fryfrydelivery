@@ -159,13 +159,39 @@
         </div>
     </section>
 
+    <!-- Modal de Login -->
+    <div class="login-modal" id="loginModal">
+        <div class="login-overlay" id="loginOverlay"></div>
+        <div class="login-content">
+            <div class="login-header">
+                <h3>🔐 Acesso Administrativo</h3>
+                <button class="login-close" id="loginClose">&times;</button>
+            </div>
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="cpfInput">CPF:</label>
+                    <input type="text" id="cpfInput" placeholder="Digite seu CPF" maxlength="11" required>
+                </div>
+                <div class="form-group">
+                    <label for="passwordInput">Senha:</label>
+                    <input type="password" id="passwordInput" placeholder="Digite sua senha" required>
+                </div>
+                <button type="submit" class="login-btn">Entrar</button>
+                <div class="login-error" id="loginError"></div>
+            </form>
+        </div>
+    </div>
+
     <!-- Painel de Administração -->
     <div class="admin-panel" id="adminPanel">
         <div class="admin-toggle" id="adminToggle">
             <span>📊</span>
         </div>
         <div class="admin-content">
-            <h3>Painel de Pedidos</h3>
+            <div class="admin-header">
+                <h3>Painel de Pedidos</h3>
+                <button class="logout-btn" id="logoutBtn">Sair</button>
+            </div>
             <div class="admin-stats">
                 <div class="stat-item">
                     <span class="stat-number" id="totalOrders">0</span>

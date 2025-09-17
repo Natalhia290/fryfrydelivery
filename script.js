@@ -1,3 +1,12 @@
+// Sistema de Autenticação
+const authConfig = {
+    cpf: '70389409103',
+    password: '999999'
+};
+
+let isAuthenticated = false;
+let sessionTimeout = null;
+
 // Dados dos produtos do cardápio FRY
 const menuData = {
     bigHots: [
@@ -683,25 +692,8 @@ if ('serviceWorker' in navigator) {
 
 // Painel de Administração
 function initializeAdminPanel() {
-    const adminToggle = document.getElementById('adminToggle');
-    const adminPanel = document.getElementById('adminPanel');
-    const adminClose = document.getElementById('adminClose');
-    
-    if (adminToggle) {
-        adminToggle.addEventListener('click', () => {
-            adminPanel.classList.toggle('active');
-            if (adminPanel.classList.contains('active')) {
-                updateAdminStats();
-                loadRecentOrders();
-            }
-        });
-    }
-    
-    if (adminClose) {
-        adminClose.addEventListener('click', () => {
-            adminPanel.classList.remove('active');
-        });
-    }
+    // Painel admin inicializado - event listeners são configurados em initializeApp()
+    console.log('Painel administrativo inicializado');
 }
 
 function updateAdminStats() {
@@ -777,6 +769,242 @@ function requestNotificationPermission() {
     }
 }
 
+// Funções de Autenticação
+function showLoginModal() {
+    const loginModal = document.getElementById('loginModal');
+    loginModal.classList.add('show');
+    document.getElementById('cpfInput').focus();
+}
+
+function hideLoginModal() {
+    const loginModal = document.getElementById('loginModal');
+    loginModal.classList.remove('show');
+    clearLoginForm();
+}
+
+function clearLoginForm() {
+    document.getElementById('cpfInput').value = '';
+    document.getElementById('passwordInput').value = '';
+    document.getElementById('loginError').textContent = '';
+}
+
+function validateCPF(cpf) {
+    // Remove caracteres não numéricos
+    cpf = cpf.replace(/\D/g, '');
+    
+    // Verifica se tem 11 dígitos
+    if (cpf.length !== 11) return false;
+    
+    // Verifica se todos os dígitos são iguais
+    if (/^(\d)\1{10}$/.test(cpf)) return false;
+    
+    // Validação do CPF
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+        sum += parseInt(cpf.charAt(i)) * (10 - i);
+    }
+    let remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    if (remainder !== parseInt(cpf.charAt(9))) return false;
+    
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+        sum += parseInt(cpf.charAt(i)) * (11 - i);
+    }
+    remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    if (remainder !== parseInt(cpf.charAt(10))) return false;
+    
+    return true;
+}
+
+function authenticate(cpf, password) {
+    // Remove caracteres não numéricos do CPF
+    cpf = cpf.replace(/\D/g, '');
+    
+    // Valida CPF
+    if (!validateCPF(cpf)) {
+        return { success: false, message: 'CPF inválido' };
+    }
+    
+    // Verifica credenciais
+    if (cpf === authConfig.cpf && password === authConfig.password) {
+        return { success: true, message: 'Login realizado com sucesso!' };
+    } else {
+        return { success: false, message: 'CPF ou senha incorretos' };
+    }
+}
+
+function login(event) {
+    event.preventDefault();
+    
+    const cpf = document.getElementById('cpfInput').value;
+    const password = document.getElementById('passwordInput').value;
+    const errorEl = document.getElementById('loginError');
+    
+    // Validação básica
+    if (!cpf || !password) {
+        errorEl.textContent = 'Por favor, preencha todos os campos';
+        return;
+    }
+    
+    // Autenticação
+    const result = authenticate(cpf, password);
+    
+    if (result.success) {
+        isAuthenticated = true;
+        hideLoginModal();
+        showNotification('Login realizado com sucesso!', 'success');
+        
+        // Definir timeout da sessão (30 minutos)
+        if (sessionTimeout) clearTimeout(sessionTimeout);
+        sessionTimeout = setTimeout(logout, 30 * 60 * 1000);
+        
+        // Salvar sessão no localStorage
+        localStorage.setItem('fry_session', JSON.stringify({
+            authenticated: true,
+            timestamp: Date.now()
+        }));
+        
+    } else {
+        errorEl.textContent = result.message;
+        // Limpar campos em caso de erro
+        document.getElementById('passwordInput').value = '';
+    }
+}
+
+function logout() {
+    isAuthenticated = false;
+    hideAdminPanel();
+    
+    if (sessionTimeout) {
+        clearTimeout(sessionTimeout);
+        sessionTimeout = null;
+    }
+    
+    // Limpar sessão do localStorage
+    localStorage.removeItem('fry_session');
+    
+    showNotification('Sessão encerrada', 'error');
+}
+
+function checkSession() {
+    const session = localStorage.getItem('fry_session');
+    if (session) {
+        const sessionData = JSON.parse(session);
+        const now = Date.now();
+        const sessionAge = now - sessionData.timestamp;
+        
+        // Sessão válida por 30 minutos
+        if (sessionAge < 30 * 60 * 1000) {
+            isAuthenticated = true;
+            
+            // Renovar timeout
+            if (sessionTimeout) clearTimeout(sessionTimeout);
+            sessionTimeout = setTimeout(logout, 30 * 60 * 1000 - sessionAge);
+        } else {
+            localStorage.removeItem('fry_session');
+        }
+    }
+}
+
+function showAdminPanel() {
+    if (!isAuthenticated) {
+        showLoginModal();
+        return;
+    }
+    
+    const adminPanel = document.getElementById('adminPanel');
+    adminPanel.classList.add('active');
+    updateAdminStats();
+    loadRecentOrders();
+}
+
+function hideAdminPanel() {
+    const adminPanel = document.getElementById('adminPanel');
+    adminPanel.classList.remove('active');
+}
+
+// Inicialização da aplicação
+function initializeApp() {
+    // Verificar sessão existente
+    checkSession();
+    
+    // Renderizar menu
+    renderMenu();
+    
+    // Event listeners do carrinho
+    document.getElementById('cartIcon').addEventListener('click', toggleCart);
+    document.getElementById('cartClose').addEventListener('click', toggleCart);
+    document.getElementById('cartOverlay').addEventListener('click', toggleCart);
+    document.getElementById('checkoutBtn').addEventListener('click', checkout);
+    
+    // Event listeners dos filtros
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const category = e.target.dataset.category;
+            filterMenu(category);
+            
+            // Atualizar botões ativos
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+        });
+    });
+    
+    // Event listeners do painel admin
+    document.getElementById('adminToggle').addEventListener('click', showAdminPanel);
+    document.getElementById('adminClose').addEventListener('click', hideAdminPanel);
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    
+    // Event listeners do modal de login
+    document.getElementById('loginForm').addEventListener('submit', login);
+    document.getElementById('loginClose').addEventListener('click', hideLoginModal);
+    document.getElementById('loginOverlay').addEventListener('click', hideLoginModal);
+    
+    // Event listeners de navegação suave
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+    
+    // Event listener para menu mobile
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const nav = document.querySelector('.nav');
+    
+    if (mobileMenuBtn && nav) {
+        mobileMenuBtn.addEventListener('click', () => {
+            nav.classList.toggle('active');
+            mobileMenuBtn.classList.toggle('active');
+        });
+    }
+    
+    // Inicializar painel admin
+    initializeAdminPanel();
+    
+    // Solicitar permissão para notificações
+    requestNotificationPermission();
+    
+    // Efeito parallax no scroll
+    window.addEventListener('scroll', () => {
+        const scrolled = window.pageYOffset;
+        const hero = document.querySelector('.hero-bg');
+        if (hero) {
+            hero.style.transform = `translateY(${scrolled * 0.1}px)`;
+        }
+    });
+}
+
 // Função para adicionar produto ao carrinho (global)
 window.addToCart = addToCart;
 window.updateQuantity = updateQuantity;
+
+// Inicializar quando o DOM estiver carregado
+document.addEventListener('DOMContentLoaded', initializeApp);
