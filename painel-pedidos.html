@@ -414,6 +414,7 @@
             <button class="filter-btn" data-filter="preparando">Preparando</button>
             <button class="filter-btn" data-filter="pronto">Prontos</button>
             <button class="filter-btn" data-filter="entregue">Entregues</button>
+            <button class="filter-btn reset-btn" onclick="resetAllOrders()" style="background: #ff4444; border-color: #ff4444;">🗑️ Resetar Todos</button>
         </div>
 
         <div class="orders-container">
@@ -650,6 +651,69 @@
             } catch (error) {
                 console.error('❌ Erro ao atualizar status:', error);
                 showError('Erro ao atualizar status do pedido');
+            }
+        }
+
+        // Resetar todos os pedidos
+        async function resetAllOrders() {
+            if (!firebaseInitialized || !db) {
+                showError('Firebase não inicializado');
+                return;
+            }
+
+            // Confirmar ação
+            const confirmed = confirm('⚠️ ATENÇÃO!\n\nVocê está prestes a DELETAR TODOS os pedidos do Firebase!\n\nEsta ação NÃO pode ser desfeita!\n\nTem certeza que deseja continuar?');
+            
+            if (!confirmed) {
+                return;
+            }
+
+            // Segunda confirmação
+            const doubleConfirmed = confirm('🚨 CONFIRMAÇÃO FINAL!\n\nTODOS os pedidos serão PERMANENTEMENTE deletados!\n\nDigite "CONFIRMAR" para continuar:');
+            
+            if (doubleConfirmed) {
+                const userInput = prompt('Digite "CONFIRMAR" para deletar todos os pedidos:');
+                
+                if (userInput !== 'CONFIRMAR') {
+                    showNotification('Operação cancelada', 'error');
+                    return;
+                }
+            } else {
+                return;
+            }
+
+            try {
+                console.log('🗑️ Iniciando reset de todos os pedidos...');
+                
+                // Buscar todos os pedidos
+                const ordersRef = db.collection('orders');
+                const querySnapshot = await ordersRef.get();
+                
+                if (querySnapshot.empty) {
+                    showNotification('Nenhum pedido encontrado para deletar', 'error');
+                    return;
+                }
+
+                // Deletar todos os documentos
+                const batch = db.batch();
+                querySnapshot.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                
+                await batch.commit();
+                
+                console.log(`✅ ${querySnapshot.size} pedidos deletados com sucesso!`);
+                
+                // Limpar lista local
+                orders = [];
+                updateStats();
+                renderOrders();
+                
+                showNotification(`✅ ${querySnapshot.size} pedidos deletados com sucesso!`, 'success');
+                
+            } catch (error) {
+                console.error('❌ Erro ao resetar pedidos:', error);
+                showError('Erro ao deletar pedidos do Firebase');
             }
         }
 

@@ -78,6 +78,12 @@ function openPedidosPanel() {
     window.open('painel-pedidos.html', '_blank');
 }
 
+// Função para abrir acompanhar pedido
+function openAcompanharPedido() {
+    console.log('Abrindo acompanhar pedido...');
+    window.open('acompanhar-pedido.html', '_blank');
+}
+
 function login(event) {
     event.preventDefault();
     

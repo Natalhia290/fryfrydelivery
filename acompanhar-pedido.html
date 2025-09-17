@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acompanhar Pedido - FRY Sushi Delivery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 90%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .logo img {
+            width: 50px;
+            height: 50px;
+        }
+
+        .logo h1 {
+            font-size: 2rem;
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .search-form {
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+            color: #ff6b6b;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: none;
+        }
+
+        .search-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .order-result {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .order-not-found {
+            color: #ff4444;
+            font-size: 1.1rem;
+        }
+
+        .order-card {
+            text-align: left;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .order-id {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .order-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-pendente {
+            background: #ffeb3b;
+            color: #000;
+        }
+
+        .status-preparando {
+            background: #ff9800;
+            color: white;
+        }
+
+        .status-pronto {
+            background: #4caf50;
+            color: white;
+        }
+
+        .status-entregue {
+            background: #2196f3;
+            color: white;
+        }
+
+        .order-info {
+            margin-bottom: 1rem;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .info-label {
+            color: #ccc;
+        }
+
+        .info-value {
+            font-weight: bold;
+            color: white;
+        }
+
+        .order-items {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .items-title {
+            color: #ff6b6b;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        .item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+        }
+
+        .status-timeline {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .timeline-title {
+            color: #ff6b6b;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .timeline-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+        }
+
+        .timeline-step.active {
+            background: rgba(255, 107, 107, 0.2);
+        }
+
+        .timeline-step.completed {
+            background: rgba(76, 175, 80, 0.2);
+        }
+
+        .timeline-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .timeline-step.completed .timeline-icon {
+            background: #4caf50;
+        }
+
+        .timeline-step.active .timeline-icon {
+            background: #ff6b6b;
+        }
+
+        .timeline-step.pending .timeline-icon {
+            background: #666;
+        }
+
+        .back-btn {
+            margin-top: 2rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            color: #ff6b6b;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 1.5rem;
+            }
+            
+            .logo h1 {
+                font-size: 1.5rem;
+            }
+            
+            .order-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="logo.svg" alt="FRY Sushi Delivery">
+            <h1>Acompanhar Pedido</h1>
+        </div>
+
+        <form class="search-form" id="searchForm">
+            <div class="form-group">
+                <label for="orderIdInput">Número do Pedido:</label>
+                <input 
+                    type="text" 
+                    id="orderIdInput" 
+                    placeholder="Ex: FRY16DEL" 
+                    maxlength="10"
+                    required
+                >
+            </div>
+            <button type="submit" class="search-btn">🔍 Buscar Pedido</button>
+        </form>
+
+        <div id="orderResult" class="order-result" style="display: none;">
+            <!-- Resultado será inserido aqui -->
+        </div>
+
+        <a href="index.html" class="back-btn">← Voltar ao Menu</a>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyC9UzFuG_0wYjsXkNDf776RCY8X3TpcI1Q",
+            authDomain: "fryfrydelivery.firebaseapp.com",
+            projectId: "fryfrydelivery",
+            storageBucket: "fryfrydelivery.firebasestorage.app",
+            messagingSenderId: "567260128188",
+            appId: "1:567260128188:web:aac55f5a4b8944622641b9",
+            measurementId: "G-SE7XWRPSRZ"
+        };
+
+        let db = null;
+        let firebaseInitialized = false;
+
+        // Inicializar Firebase
+        async function initializeFirebase() {
+            try {
+                console.log('🔥 Inicializando Firebase...');
+                
+                if (typeof firebase !== 'undefined') {
+                    if (firebase.apps.length === 0) {
+                        firebase.initializeApp(firebaseConfig);
+                    }
+                    db = firebase.firestore();
+                    firebaseInitialized = true;
+                    console.log('✅ Firebase inicializado com sucesso!');
+                } else {
+                    throw new Error('Firebase não carregado');
+                }
+            } catch (error) {
+                console.error('❌ Erro ao inicializar Firebase:', error);
+                showError('Erro ao conectar com o Firebase');
+            }
+        }
+
+        // Buscar pedido
+        async function searchOrder(orderId) {
+            if (!firebaseInitialized || !db) {
+                showError('Firebase não inicializado');
+                return;
+            }
+
+            try {
+                console.log(`🔍 Buscando pedido: ${orderId}`);
+                
+                const ordersRef = db.collection('orders');
+                const querySnapshot = await ordersRef.where('id', '==', orderId.toUpperCase()).get();
+                
+                if (querySnapshot.empty) {
+                    showOrderNotFound();
+                    return;
+                }
+                
+                const orderData = querySnapshot.docs[0].data();
+                console.log('✅ Pedido encontrado:', orderData);
+                showOrder(orderData);
+                
+            } catch (error) {
+                console.error('❌ Erro ao buscar pedido:', error);
+                showError('Erro ao buscar pedido no Firebase');
+            }
+        }
+
+        // Mostrar pedido encontrado
+        function showOrder(order) {
+            const orderResult = document.getElementById('orderResult');
+            
+            const statusText = {
+                'pendente': 'Pendente',
+                'preparando': 'Preparando',
+                'pronto': 'Pronto',
+                'entregue': 'Entregue'
+            };
+
+            const timeline = generateTimeline(order.status);
+
+            orderResult.innerHTML = `
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-id">${order.id}</div>
+                        <div class="order-status status-${order.status}">${statusText[order.status]}</div>
+                    </div>
+                    
+                    <div class="order-info">
+                        <div class="info-item">
+                            <span class="info-label">Cliente:</span>
+                            <span class="info-value">${order.cliente || 'N/A'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Telefone:</span>
+                            <span class="info-value">${order.telefone || 'N/A'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Total:</span>
+                            <span class="info-value">R$ ${(order.total || 0).toFixed(2).replace('.', ',')}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Data do Pedido:</span>
+                            <span class="info-value">${new Date(order.timestamp).toLocaleString('pt-BR')}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="order-items">
+                        <div class="items-title">Itens do Pedido:</div>
+                        ${(order.itens || []).map(item => `
+                            <div class="item">
+                                <span>${item.quantity}x ${item.name}</span>
+                                <span>R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="status-timeline">
+                        <div class="timeline-title">Status do Pedido:</div>
+                        ${timeline}
+                    </div>
+                </div>
+            `;
+            
+            orderResult.style.display = 'block';
+        }
+
+        // Gerar timeline de status
+        function generateTimeline(currentStatus) {
+            const steps = [
+                { id: 'pendente', label: 'Pedido Recebido', icon: '📝' },
+                { id: 'preparando', label: 'Preparando', icon: '👨‍🍳' },
+                { id: 'pronto', label: 'Pronto para Entrega', icon: '✅' },
+                { id: 'entregue', label: 'Entregue', icon: '🚚' }
+            ];
+
+            const statusOrder = ['pendente', 'preparando', 'pronto', 'entregue'];
+            const currentIndex = statusOrder.indexOf(currentStatus);
+
+            return steps.map((step, index) => {
+                let className = 'timeline-step';
+                if (index <= currentIndex) {
+                    className += index === currentIndex ? ' active' : ' completed';
+                } else {
+                    className += ' pending';
+                }
+
+                return `
+                    <div class="${className}">
+                        <div class="timeline-icon">${step.icon}</div>
+                        <span>${step.label}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Mostrar pedido não encontrado
+        function showOrderNotFound() {
+            const orderResult = document.getElementById('orderResult');
+            orderResult.innerHTML = `
+                <div class="order-not-found">
+                    ❌ Pedido não encontrado!<br>
+                    Verifique o número do pedido e tente novamente.
+                </div>
+            `;
+            orderResult.style.display = 'block';
+        }
+
+        // Mostrar erro
+        function showError(message) {
+            const orderResult = document.getElementById('orderResult');
+            orderResult.innerHTML = `
+                <div class="order-not-found">
+                    ❌ ${message}
+                </div>
+            `;
+            orderResult.style.display = 'block';
+        }
+
+        // Configurar formulário
+        function setupForm() {
+            const form = document.getElementById('searchForm');
+            const orderIdInput = document.getElementById('orderIdInput');
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const orderId = orderIdInput.value.trim().toUpperCase();
+                
+                if (!orderId) {
+                    showError('Por favor, digite o número do pedido');
+                    return;
+                }
+
+                // Mostrar loading
+                const orderResult = document.getElementById('orderResult');
+                orderResult.innerHTML = '<div class="loading">🔍 Buscando pedido...</div>';
+                orderResult.style.display = 'block';
+
+                searchOrder(orderId);
+            });
+
+            // Auto-formatar input
+            orderIdInput.addEventListener('input', (e) => {
+                let value = e.target.value.toUpperCase();
+                // Remover caracteres inválidos
+                value = value.replace(/[^A-Z0-9]/g, '');
+                e.target.value = value;
+            });
+        }
+
+        // Inicializar aplicação
+        async function initializeApp() {
+            await initializeFirebase();
+            setupForm();
+        }
+
+        // Inicializar quando a página carregar
+        window.addEventListener('load', initializeApp);
+    </script>
+</body>
+</html>
