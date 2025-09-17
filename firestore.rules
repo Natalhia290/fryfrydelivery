@@ -3,7 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Permitir leitura e escrita para pedidos
-    match /pedidos/{pedidoId} {
+    match /orders/{orderId} {
       allow read, write: if true;
     }
     
@@ -26,6 +26,11 @@ service cloud.firestore {
     match /cardapio/{itemId} {
       allow read: if true;
       allow write: if true;
+    }
+    
+    // Permitir leitura e escrita para qualquer documento
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }

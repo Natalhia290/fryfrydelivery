@@ -46,12 +46,18 @@ function loadData() {
     const savedOrders = localStorage.getItem('fryOrders');
     if (savedOrders) {
         orders = JSON.parse(savedOrders);
+        console.log('Pedidos carregados:', orders.length);
         // Atualizar currentOrderId baseado no maior ID existente
-        const maxId = Math.max(...orders.map(order => {
-            const match = order.id.match(/FRY(\d+)DEL/);
-            return match ? parseInt(match[1]) : 0;
-        }));
-        currentOrderId = maxId + 1;
+        if (orders.length > 0) {
+            const maxId = Math.max(...orders.map(order => {
+                const match = order.id.match(/FRY(\d+)DEL/);
+                return match ? parseInt(match[1]) : 0;
+            }));
+            currentOrderId = maxId + 1;
+        }
+    } else {
+        console.log('Nenhum pedido encontrado no localStorage');
+        orders = [];
     }
 
     // Carregar menu
@@ -114,14 +120,26 @@ function updateStats() {
 // Renderizar pedidos
 function renderOrders(filter = 'all') {
     const pedidosList = document.getElementById('pedidosList');
-    let filteredOrders = orders;
+    if (!pedidosList) {
+        console.error('Elemento pedidosList não encontrado');
+        return;
+    }
+    
+    let filteredOrders = orders || [];
     
     if (filter !== 'all') {
         filteredOrders = orders.filter(order => order.status === filter);
     }
     
+    console.log('Renderizando pedidos:', filteredOrders.length, 'filtro:', filter);
+    
     // Ordenar por data (mais recentes primeiro)
     filteredOrders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    if (filteredOrders.length === 0) {
+        pedidosList.innerHTML = '<div class="no-orders">Nenhum pedido encontrado</div>';
+        return;
+    }
     
     pedidosList.innerHTML = filteredOrders.map(order => `
         <div class="order-card">
@@ -446,31 +464,42 @@ async function initializeAdmin() {
 
 // Configurar atualização em tempo real
 function setupRealTimeUpdates() {
+    console.log('Configurando atualizações em tempo real...');
+    
     // Verificar mudanças no localStorage a cada 2 segundos
     setInterval(() => {
-        const savedOrders = localStorage.getItem('fryOrders');
-        if (savedOrders) {
-            const newOrders = JSON.parse(savedOrders);
-            if (JSON.stringify(newOrders) !== JSON.stringify(orders)) {
-                console.log('Novos pedidos detectados, atualizando...');
-                orders = newOrders;
-                updateStats();
-                renderOrders(document.getElementById('statusFilter').value);
+        try {
+            const savedOrders = localStorage.getItem('fryOrders');
+            if (savedOrders) {
+                const newOrders = JSON.parse(savedOrders);
+                if (newOrders.length !== orders.length || JSON.stringify(newOrders) !== JSON.stringify(orders)) {
+                    console.log('Novos pedidos detectados, atualizando...', newOrders.length, 'pedidos');
+                    orders = newOrders;
+                    updateStats();
+                    const currentFilter = document.getElementById('statusFilter')?.value || 'all';
+                    renderOrders(currentFilter);
+                }
             }
+        } catch (error) {
+            console.error('Erro ao verificar pedidos:', error);
         }
     }, 2000);
     
     // Verificar mudanças no menu a cada 5 segundos
     setInterval(() => {
-        const savedMenu = localStorage.getItem('fryMenu');
-        if (savedMenu) {
-            const newMenu = JSON.parse(savedMenu);
-            if (JSON.stringify(newMenu) !== JSON.stringify(menuData)) {
-                console.log('Menu atualizado, recarregando...');
-                menuData = newMenu;
-                renderCardapio();
-                renderProductPhotos();
+        try {
+            const savedMenu = localStorage.getItem('fryMenu');
+            if (savedMenu) {
+                const newMenu = JSON.parse(savedMenu);
+                if (JSON.stringify(newMenu) !== JSON.stringify(menuData)) {
+                    console.log('Menu atualizado, recarregando...');
+                    menuData = newMenu;
+                    renderCardapio();
+                    renderProductPhotos();
+                }
             }
+        } catch (error) {
+            console.error('Erro ao verificar menu:', error);
         }
     }, 5000);
 }
