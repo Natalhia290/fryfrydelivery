@@ -10,7 +10,7 @@ let sessionTimeout = null;
 // Sistema de Gerenciamento de Imagens
 let productImages = {}; // Armazenar imagens base64 por ID do produto
 
-// Função para mostrar painel admin (definida globalmente)
+// Funções globais para admin e login
 function showAdminPanel() {
     console.log('showAdminPanel chamada, isAuthenticated:', isAuthenticated);
     
@@ -29,6 +29,33 @@ function showAdminPanel() {
     } else {
         console.error('adminPanel não encontrado!');
     }
+}
+
+function showLoginModal() {
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) {
+        loginModal.classList.add('show');
+        const cpfInput = document.getElementById('cpfInput');
+        if (cpfInput) cpfInput.focus();
+    }
+}
+
+function hideLoginModal() {
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) {
+        loginModal.classList.remove('show');
+        clearLoginForm();
+    }
+}
+
+function clearLoginForm() {
+    const cpfInput = document.getElementById('cpfInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const loginError = document.getElementById('loginError');
+    
+    if (cpfInput) cpfInput.value = '';
+    if (passwordInput) passwordInput.value = '';
+    if (loginError) loginError.textContent = '';
 }
 
 // Configuração do Firebase
@@ -1169,23 +1196,6 @@ function requestNotificationPermission() {
 }
 
 // Funções de Autenticação
-function showLoginModal() {
-    const loginModal = document.getElementById('loginModal');
-    loginModal.classList.add('show');
-    document.getElementById('cpfInput').focus();
-}
-
-function hideLoginModal() {
-    const loginModal = document.getElementById('loginModal');
-    loginModal.classList.remove('show');
-    clearLoginForm();
-}
-
-function clearLoginForm() {
-    document.getElementById('cpfInput').value = '';
-    document.getElementById('passwordInput').value = '';
-    document.getElementById('loginError').textContent = '';
-}
 
 function validateCPF(cpf) {
     // Remove caracteres não numéricos
@@ -1375,16 +1385,8 @@ function initializeApp() {
     if (logoutBtn) logoutBtn.addEventListener('click', logout);
     
     // Event listeners do modal de login
-    const loginForm = document.getElementById('loginForm');
     const loginClose = document.getElementById('loginClose');
     const loginOverlay = document.getElementById('loginOverlay');
-    
-    if (loginForm) {
-        console.log('Adicionando event listener ao loginForm');
-        loginForm.addEventListener('submit', login);
-    } else {
-        console.error('loginForm não encontrado!');
-    }
     
     if (loginClose) loginClose.addEventListener('click', hideLoginModal);
     if (loginOverlay) loginOverlay.addEventListener('click', hideLoginModal);
