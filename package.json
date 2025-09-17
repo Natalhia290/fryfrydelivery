@@ -1,0 +1,16 @@
+{
+  "name": "fry-sushi-delivery",
+  "version": "1.0.0",
+  "description": "Site de delivery de sushi FRY - Goiânia",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx http-server -p 3000 -o",
+    "start": "npx http-server -p 3000 -o"
+  },
+  "keywords": ["sushi", "delivery", "goiania", "restaurant"],
+  "author": "FRY - Sushi Delivery",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
