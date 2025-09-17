@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Firebase</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .info { color: blue; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Debug Firebase - Fry Sushi</h1>
+        
+        <div>
+            <button onclick="testConnection()">1. Testar Conexão</button>
+            <button onclick="testSave()">2. Salvar Pedido</button>
+            <button onclick="testLoad()">3. Carregar Pedidos</button>
+            <button onclick="clearLog()">Limpar Log</button>
+        </div>
+        
+        <div id="log"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        const log = document.getElementById('log');
+        
+        function addLog(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function clearLog() {
+            log.innerHTML = '';
+        }
+
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyC9UzFuG_0wYjsXkNDf776RCY8X3TpcI1Q",
+            authDomain: "fryfrydelivery.firebaseapp.com",
+            projectId: "fryfrydelivery",
+            storageBucket: "fryfrydelivery.firebasestorage.app",
+            messagingSenderId: "567260128188",
+            appId: "1:567260128188:web:aac55f5a4b8944622641b9",
+            measurementId: "G-SE7XWRPSRZ"
+        };
+
+        let app, db;
+
+        async function testConnection() {
+            addLog('🔄 Testando conexão com Firebase...', 'info');
+            
+            try {
+                app = firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                
+                addLog('✅ Firebase inicializado com sucesso!', 'success');
+                addLog(`📊 Projeto: ${app.options.projectId}`, 'info');
+                addLog(`🌐 Auth Domain: ${app.options.authDomain}`, 'info');
+                
+                return true;
+            } catch (error) {
+                addLog(`❌ Erro ao conectar: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function testSave() {
+            if (!db) {
+                addLog('❌ Firebase não inicializado. Execute o teste de conexão primeiro.', 'error');
+                return;
+            }
+
+            addLog('🔄 Salvando pedido de teste...', 'info');
+            
+            try {
+                const testOrder = {
+                    id: 'FRY' + Date.now() + 'DEL',
+                    timestamp: new Date().toISOString(),
+                    itens: [
+                        { id: 1, name: 'Big Hot de Tilápia', price: 49.90, quantity: 2 }
+                    ],
+                    total: 99.80,
+                    status: 'pendente',
+                    cliente: 'Cliente Teste',
+                    telefone: '(62) 99999-9999',
+                    notes: 'Pedido de teste - Debug',
+                    updatedAt: new Date().toISOString()
+                };
+                
+                const docRef = await db.collection('orders').add(testOrder);
+                
+                addLog(`✅ Pedido salvo com sucesso!`, 'success');
+                addLog(`📄 ID do documento: ${docRef.id}`, 'info');
+                addLog(`🆔 ID do pedido: ${testOrder.id}`, 'info');
+                addLog(`💰 Total: R$ ${testOrder.total}`, 'info');
+                
+            } catch (error) {
+                addLog(`❌ Erro ao salvar: ${error.message}`, 'error');
+                addLog(`🔍 Código do erro: ${error.code}`, 'error');
+            }
+        }
+
+        async function testLoad() {
+            if (!db) {
+                addLog('❌ Firebase não inicializado. Execute o teste de conexão primeiro.', 'error');
+                return;
+            }
+
+            addLog('🔄 Carregando pedidos...', 'info');
+            
+            try {
+                const snapshot = await db.collection('orders').orderBy('timestamp', 'desc').get();
+                
+                addLog(`✅ Pedidos carregados: ${snapshot.size}`, 'success');
+                
+                if (snapshot.empty) {
+                    addLog('⚠️ Nenhum pedido encontrado na coleção "orders"', 'error');
+                } else {
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        addLog(`📋 Pedido: ${data.id} - Cliente: ${data.cliente} - Total: R$ ${data.total}`, 'info');
+                    });
+                }
+                
+            } catch (error) {
+                addLog(`❌ Erro ao carregar: ${error.message}`, 'error');
+                addLog(`🔍 Código do erro: ${error.code}`, 'error');
+            }
+        }
+
+        // Auto-teste ao carregar
+        window.onload = function() {
+            addLog('🚀 Debug Firebase iniciado', 'info');
+            addLog('📋 Clique em "1. Testar Conexão" para começar', 'info');
+        };
+    </script>
+</body>
+</html>
