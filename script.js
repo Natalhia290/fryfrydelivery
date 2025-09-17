@@ -75,6 +75,30 @@ function testAdminRedirect() {
 // Função para abrir painel de pedidos
 function openPedidosPanel() {
     console.log('Abrindo painel de pedidos...');
+    
+    // Verificar se está autenticado
+    const session = localStorage.getItem('fry_session');
+    if (!session) {
+        alert('⚠️ Acesso Restrito!\n\nVocê precisa fazer login para acessar o painel de pedidos.\n\nClique em "Entrar" no canto superior direito para fazer login.');
+        return;
+    }
+    
+    try {
+        const sessionData = JSON.parse(session);
+        const now = Date.now();
+        const sessionTimeout = 30 * 60 * 1000; // 30 minutos
+        
+        if (!sessionData.authenticated || (now - sessionData.timestamp) > sessionTimeout) {
+            localStorage.removeItem('fry_session');
+            alert('⚠️ Sessão Expirada!\n\nSua sessão expirou. Faça login novamente para acessar o painel de pedidos.');
+            return;
+        }
+    } catch (error) {
+        localStorage.removeItem('fry_session');
+        alert('⚠️ Erro de Sessão!\n\nFaça login novamente para acessar o painel de pedidos.');
+        return;
+    }
+    
     window.open('painel-pedidos.html', '_blank');
 }
 

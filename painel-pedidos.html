@@ -390,6 +390,7 @@
         <div class="status-indicator">
             <div class="status-dot"></div>
             <span>Conectado ao Firebase</span>
+            <button class="logout-btn" onclick="logout()" style="margin-left: 1rem; padding: 0.5rem 1rem; background: #ff4444; color: white; border: none; border-radius: 20px; cursor: pointer;">Sair</button>
         </div>
     </header>
 
@@ -454,6 +455,45 @@
         let firebaseInitialized = false;
         let orders = [];
         let currentFilter = 'all';
+
+        // Verificar autenticação
+        function checkAuth() {
+            const session = localStorage.getItem('fry_session');
+            if (!session) {
+                return false;
+            }
+            
+            try {
+                const sessionData = JSON.parse(session);
+                const now = Date.now();
+                const sessionTimeout = 30 * 60 * 1000; // 30 minutos
+                
+                if (!sessionData.authenticated || (now - sessionData.timestamp) > sessionTimeout) {
+                    localStorage.removeItem('fry_session');
+                    return false;
+                }
+                
+                return true;
+            } catch (error) {
+                localStorage.removeItem('fry_session');
+                return false;
+            }
+        }
+
+        // Redirecionar para login se não autenticado
+        function redirectToLogin() {
+            alert('⚠️ Acesso Restrito!\n\nVocê precisa fazer login para acessar o painel de pedidos.\n\nRedirecionando para a página de login...');
+            window.location.href = 'index.html';
+        }
+
+        // Função de logout
+        function logout() {
+            if (confirm('Tem certeza que deseja sair do painel de pedidos?')) {
+                localStorage.removeItem('fry_session');
+                alert('Logout realizado com sucesso!');
+                window.location.href = 'index.html';
+            }
+        }
 
         // Inicializar Firebase
         async function initializeFirebase() {
@@ -780,6 +820,12 @@
 
         // Inicializar aplicação
         async function initializeApp() {
+            // Verificar autenticação primeiro
+            if (!checkAuth()) {
+                redirectToLogin();
+                return;
+            }
+
             await initializeFirebase();
             await loadOrders();
             setupFilters();
