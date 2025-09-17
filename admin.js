@@ -40,13 +40,55 @@ function generateOrderId() {
     return id;
 }
 
-// Carregar dados do localStorage
-function loadData() {
-    // Carregar pedidos
+// Carregar dados do Firebase e localStorage
+async function loadData() {
+    console.log('Carregando dados...');
+    
+    // Carregar pedidos do Firebase primeiro
+    if (firebaseInitialized && db) {
+        try {
+            console.log('Carregando pedidos do Firebase...');
+            const { collection, getDocs, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+            const ordersRef = collection(db, 'orders');
+            const q = query(ordersRef, orderBy('timestamp', 'desc'));
+            const querySnapshot = await getDocs(q);
+            
+            orders = [];
+            querySnapshot.forEach((doc) => {
+                orders.push(doc.data());
+            });
+            
+            console.log('Pedidos carregados do Firebase:', orders.length);
+            
+            // Atualizar currentOrderId baseado no maior ID existente
+            if (orders.length > 0) {
+                const maxId = Math.max(...orders.map(order => {
+                    const match = order.id.match(/FRY(\d+)DEL/);
+                    return match ? parseInt(match[1]) : 0;
+                }));
+                currentOrderId = maxId + 1;
+            }
+            
+            // Salvar no localStorage como backup
+            localStorage.setItem('fryOrders', JSON.stringify(orders));
+            
+        } catch (error) {
+            console.error('Erro ao carregar do Firebase:', error);
+            // Fallback para localStorage
+            loadFromLocalStorage();
+        }
+    } else {
+        console.log('Firebase não inicializado, carregando do localStorage');
+        loadFromLocalStorage();
+    }
+}
+
+// Função auxiliar para carregar do localStorage
+function loadFromLocalStorage() {
     const savedOrders = localStorage.getItem('fryOrders');
     if (savedOrders) {
         orders = JSON.parse(savedOrders);
-        console.log('Pedidos carregados:', orders.length);
+        console.log('Pedidos carregados do localStorage:', orders.length);
         // Atualizar currentOrderId baseado no maior ID existente
         if (orders.length > 0) {
             const maxId = Math.max(...orders.map(order => {
@@ -59,7 +101,10 @@ function loadData() {
         console.log('Nenhum pedido encontrado no localStorage');
         orders = [];
     }
+}
 
+// Carregar menu
+function loadMenuData() {
     // Carregar menu
     const savedMenu = localStorage.getItem('fryMenu');
     if (savedMenu) {
@@ -227,7 +272,7 @@ function editOrder(orderId) {
 }
 
 // Salvar edição do pedido
-function saveOrderEdit() {
+async function saveOrderEdit() {
     const orderId = document.getElementById('editOrderId').textContent;
     const newStatus = document.getElementById('editOrderStatus').value;
     const notes = document.getElementById('editOrderNotes').value;
@@ -237,6 +282,28 @@ function saveOrderEdit() {
         order.status = newStatus;
         order.notes = notes;
         order.updatedAt = new Date().toISOString();
+        
+        // Salvar no Firebase se estiver disponível
+        if (firebaseInitialized && db) {
+            try {
+                const { collection, query, where, getDocs, updateDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                const ordersRef = collection(db, 'orders');
+                const q = query(ordersRef, where('id', '==', orderId));
+                const querySnapshot = await getDocs(q);
+                
+                if (!querySnapshot.empty) {
+                    const doc = querySnapshot.docs[0];
+                    await updateDoc(doc.ref, {
+                        status: newStatus,
+                        notes: notes,
+                        updatedAt: order.updatedAt
+                    });
+                    console.log('Pedido atualizado no Firebase');
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar no Firebase:', error);
+            }
+        }
         
         saveData();
         renderOrders(document.getElementById('statusFilter').value);
@@ -441,7 +508,8 @@ async function initializeAdmin() {
     await initializeFirebase();
     
     // Carregar dados
-    loadData();
+    await loadData();
+    loadMenuData();
     
     // Configurar event listeners
     setupNavigation();
@@ -466,24 +534,49 @@ async function initializeAdmin() {
 function setupRealTimeUpdates() {
     console.log('Configurando atualizações em tempo real...');
     
-    // Verificar mudanças no localStorage a cada 2 segundos
-    setInterval(() => {
+    // Verificar mudanças no Firebase a cada 3 segundos
+    setInterval(async () => {
         try {
-            const savedOrders = localStorage.getItem('fryOrders');
-            if (savedOrders) {
-                const newOrders = JSON.parse(savedOrders);
+            if (firebaseInitialized && db) {
+                // Carregar do Firebase
+                const { collection, getDocs, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                const ordersRef = collection(db, 'orders');
+                const q = query(ordersRef, orderBy('timestamp', 'desc'));
+                const querySnapshot = await getDocs(q);
+                
+                const newOrders = [];
+                querySnapshot.forEach((doc) => {
+                    newOrders.push(doc.data());
+                });
+                
                 if (newOrders.length !== orders.length || JSON.stringify(newOrders) !== JSON.stringify(orders)) {
-                    console.log('Novos pedidos detectados, atualizando...', newOrders.length, 'pedidos');
+                    console.log('Novos pedidos detectados no Firebase, atualizando...', newOrders.length, 'pedidos');
                     orders = newOrders;
                     updateStats();
                     const currentFilter = document.getElementById('statusFilter')?.value || 'all';
                     renderOrders(currentFilter);
+                    
+                    // Atualizar localStorage
+                    localStorage.setItem('fryOrders', JSON.stringify(orders));
+                }
+            } else {
+                // Fallback para localStorage
+                const savedOrders = localStorage.getItem('fryOrders');
+                if (savedOrders) {
+                    const newOrders = JSON.parse(savedOrders);
+                    if (newOrders.length !== orders.length || JSON.stringify(newOrders) !== JSON.stringify(orders)) {
+                        console.log('Novos pedidos detectados no localStorage, atualizando...', newOrders.length, 'pedidos');
+                        orders = newOrders;
+                        updateStats();
+                        const currentFilter = document.getElementById('statusFilter')?.value || 'all';
+                        renderOrders(currentFilter);
+                    }
                 }
             }
         } catch (error) {
             console.error('Erro ao verificar pedidos:', error);
         }
-    }, 2000);
+    }, 3000);
     
     // Verificar mudanças no menu a cada 5 segundos
     setInterval(() => {
