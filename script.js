@@ -369,6 +369,23 @@ function updateCartUI() {
     updateCartCount();
     updateCartItems();
     updateCartTotal();
+    updateCheckoutButton();
+}
+
+function updateCheckoutButton() {
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    if (total < 50) {
+        const remaining = (50 - total).toFixed(2).replace('.', ',');
+        checkoutBtn.innerHTML = `Adicione R$ ${remaining} para finalizar`;
+        checkoutBtn.style.background = '#ffc107';
+        checkoutBtn.disabled = true;
+    } else {
+        checkoutBtn.innerHTML = 'Enviar Pedido no WhatsApp';
+        checkoutBtn.style.background = '';
+        checkoutBtn.disabled = false;
+    }
 }
 
 function updateCartCount() {
@@ -440,10 +457,41 @@ const whatsappConfig = window.whatsappBusinessConfig || {
     },
     messages: {
         greeting: '🍣 *FRY - Sushi Delivery* 🍣\n\nOlá! Bem-vindo(a) ao nosso delivery de sushi premium em Goiânia! 🎉',
-        deliveryInfo: '🚚 *Informações de Entrega:*\n• Tempo estimado: 30-45 minutos\n• Taxa de entrega: Grátis\n• Forma de pagamento: PIX, Dinheiro ou Cartão',
+        deliveryInfo: '🚚 *Informações de Entrega:*\n• Tempo estimado: 30-45 minutos\n• Taxa de entrega: Calculada no WhatsApp\n• Entregas a partir de R$ 100,00: Grátis\n• Forma de pagamento: PIX, Dinheiro ou Cartão',
         closing: 'Obrigado por escolher a FRY! 🙏\n\n*Horário de funcionamento:*\nSegunda a Domingo: 18:00 às 23:00'
     }
 };
+
+// Configuração do Firebase (será carregada dinamicamente)
+let db = null;
+let firebaseInitialized = false;
+
+// Inicializar Firebase
+async function initializeFirebase() {
+    try {
+        // Importar Firebase dinamicamente
+        const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+        const { getFirestore } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyC9UzFuG_0wYjsXkNDf776RCY8X3TpcI1Q",
+            authDomain: "fryfrydelivery.firebaseapp.com",
+            projectId: "fryfrydelivery",
+            storageBucket: "fryfrydelivery.firebasestorage.app",
+            messagingSenderId: "567260128188",
+            appId: "1:567260128188:web:aac55f5a4b8944622641b9",
+            measurementId: "G-SE7XWRPSRZ"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        firebaseInitialized = true;
+        console.log('Firebase inicializado com sucesso!');
+    } catch (error) {
+        console.error('Erro ao inicializar Firebase:', error);
+        firebaseInitialized = false;
+    }
+}
 
 // Checkout via WhatsApp com automação
 function checkout() {
@@ -467,7 +515,7 @@ function checkout() {
     processCheckout();
 }
 
-function processCheckout() {
+async function processCheckout() {
     const customerPhone = document.getElementById('customerPhone').value;
     const customerName = document.getElementById('customerName').value;
     const checkoutBtn = document.getElementById('checkoutBtn');
@@ -485,6 +533,13 @@ function processCheckout() {
         return;
     }
     
+    // Validar pedido mínimo de R$ 50
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    if (total < 50) {
+        showNotification(`Pedido mínimo de R$ 50,00. Seu pedido atual: R$ ${total.toFixed(2).replace('.', ',')}`, 'error');
+        return;
+    }
+    
     // Animação do botão
     checkoutBtn.style.transform = 'scale(0.95)';
     checkoutBtn.innerHTML = 'Enviando...';
@@ -493,17 +548,8 @@ function processCheckout() {
     // Gerar mensagem de pedido do cliente
     const orderMessage = generateCustomerOrderMessage(customerName);
     
-    // Salvar pedido no localStorage para acompanhamento
-    const orderId = generateOrderId();
-    saveOrderToLocalStorage(customerName, customerPhone);
-    
-    // Notificar administrador
-    notifyAdmin({
-        id: orderId,
-        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        timestamp: new Date().toISOString(),
-        customer: { name: customerName, phone: customerPhone }
-    });
+    // Salvar pedido no Firebase e localStorage
+    const order = await saveOrderToFirebase(customerName, customerPhone);
     
     // Enviar mensagem do cliente para WhatsApp da loja
     const whatsappSent = sendWhatsAppMessage(customerPhone, orderMessage);
@@ -703,6 +749,12 @@ function generateCustomerOrderMessage(customerName) {
     message += '• 💰 Forma de pagamento: [PIX/DINHEIRO/CARTÃO]\n';
     message += '• 📝 Observações: [SE HOUVER]\n\n';
     
+    message += '🚚 *INFORMAÇÕES DE ENTREGA:*\n';
+    message += '• ⏱️ Tempo estimado: 30-45 minutos\n';
+    message += '• 💰 Taxa de entrega: Calculada no WhatsApp\n';
+    message += '• 🆓 Entregas a partir de R$ 100,00: Grátis\n';
+    message += '• 📍 Área de entrega: Goiânia e Região Metropolitana\n\n';
+    
     message += 'Obrigado! 🙏';
     
     return message;
@@ -715,8 +767,8 @@ function generateOrderId() {
     return `FRY${timestamp}${random}`;
 }
 
-// Salvar pedido no localStorage para acompanhamento
-function saveOrderToLocalStorage(customerName, customerPhone) {
+// Salvar pedido no Firebase e localStorage
+async function saveOrderToFirebase(customerName, customerPhone) {
     const order = {
         id: generateOrderId(),
         timestamp: new Date().toISOString(),
@@ -729,16 +781,26 @@ function saveOrderToLocalStorage(customerName, customerPhone) {
         }
     };
     
+    // Salvar no localStorage (backup)
     const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
     orders.unshift(order);
     localStorage.setItem('fryOrders', JSON.stringify(orders));
     
+    // Salvar no Firebase se estiver disponível
+    if (firebaseInitialized && db) {
+        try {
+            const { collection, addDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+            await addDoc(collection(db, 'orders'), order);
+            console.log('Pedido salvo no Firebase:', order.id);
+        } catch (error) {
+            console.error('Erro ao salvar no Firebase:', error);
+        }
+    }
+    
     // Notificar administrador
     notifyAdmin(order);
     
-    // Limpar carrinho após salvar
-    cart = [];
-    updateCartUI();
+    return order;
 }
 
 // Função original mantida para compatibilidade
@@ -1129,7 +1191,10 @@ function hideAdminPanel() {
 }
 
 // Inicialização da aplicação
-function initializeApp() {
+async function initializeApp() {
+    // Inicializar Firebase
+    await initializeFirebase();
+    
     // Verificar sessão existente
     checkSession();
     
