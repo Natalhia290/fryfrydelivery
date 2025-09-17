@@ -996,33 +996,53 @@ async function saveOrderToFirebase(customerName, customerPhone) {
         updatedAt: new Date().toISOString()
     };
     
-    // Salvar no localStorage (backup)
-    const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
-    orders.unshift(order);
-    localStorage.setItem('fryOrders', JSON.stringify(orders));
-    
-    // Salvar no Firebase se estiver disponível
+    // Salvar no Firebase PRIMEIRO (fonte principal)
     if (firebaseInitialized && db) {
         try {
             // Usar Firebase v8 (compat) para consistência
             const docRef = await db.collection('orders').add(order);
-            console.log('Pedido salvo no Firebase com ID:', docRef.id);
-            console.log('Dados do pedido:', order);
+            console.log('✅ Pedido salvo no Firebase com ID:', docRef.id);
+            console.log('📊 Dados do pedido:', order);
+            
+            // Salvar no localStorage apenas como backup
+            const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
+            orders.unshift(order);
+            localStorage.setItem('fryOrders', JSON.stringify(orders));
+            console.log('💾 Backup salvo no localStorage');
+            
         } catch (error) {
-            console.error('Erro ao salvar no Firebase:', error);
-            console.log('Tentando novamente em 2 segundos...');
+            console.error('❌ Erro ao salvar no Firebase:', error);
+            console.log('🔄 Tentando novamente em 2 segundos...');
+            
             // Tentar novamente após 2 segundos
             setTimeout(async () => {
                 try {
                     await db.collection('orders').add(order);
-                    console.log('Pedido salvo no Firebase na segunda tentativa');
+                    console.log('✅ Pedido salvo no Firebase na segunda tentativa');
+                    
+                    // Salvar no localStorage como backup
+                    const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
+                    orders.unshift(order);
+                    localStorage.setItem('fryOrders', JSON.stringify(orders));
+                    
                 } catch (retryError) {
-                    console.error('Erro na segunda tentativa:', retryError);
+                    console.error('❌ Erro na segunda tentativa:', retryError);
+                    console.log('⚠️ Salvando apenas no localStorage como fallback');
+                    
+                    // Fallback para localStorage
+                    const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
+                    orders.unshift(order);
+                    localStorage.setItem('fryOrders', JSON.stringify(orders));
                 }
             }, 2000);
         }
     } else {
-        console.log('Firebase não inicializado, salvando apenas no localStorage');
+        console.log('⚠️ Firebase não inicializado, salvando apenas no localStorage');
+        
+        // Fallback para localStorage
+        const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
+        orders.unshift(order);
+        localStorage.setItem('fryOrders', JSON.stringify(orders));
     }
     
     // Notificar administrador

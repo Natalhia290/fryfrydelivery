@@ -53,10 +53,10 @@ function generateOrderId() {
 async function loadData() {
     console.log('Carregando dados...');
     
-    // Carregar pedidos do Firebase primeiro
+    // Carregar pedidos do Firebase PRIMEIRO (fonte principal)
     if (firebaseInitialized && db) {
         try {
-            console.log('Carregando pedidos do Firebase...');
+            console.log('🔄 Carregando pedidos do Firebase...');
             
             // Usar a versão compatível do Firebase
             if (typeof firebase !== 'undefined') {
@@ -81,7 +81,7 @@ async function loadData() {
                 });
             }
             
-            console.log('Pedidos carregados do Firebase:', orders.length);
+            console.log('✅ Pedidos carregados do Firebase:', orders.length);
             
             // Atualizar currentOrderId baseado no maior ID existente
             if (orders.length > 0) {
@@ -94,14 +94,16 @@ async function loadData() {
             
             // Salvar no localStorage como backup
             localStorage.setItem('fryOrders', JSON.stringify(orders));
+            console.log('💾 Backup salvo no localStorage');
             
         } catch (error) {
-            console.error('Erro ao carregar do Firebase:', error);
+            console.error('❌ Erro ao carregar do Firebase:', error);
+            console.log('⚠️ Fallback para localStorage');
             // Fallback para localStorage
             loadFromLocalStorage();
         }
     } else {
-        console.log('Firebase não inicializado, carregando do localStorage');
+        console.log('⚠️ Firebase não inicializado, carregando do localStorage');
         loadFromLocalStorage();
     }
 }
@@ -620,12 +622,13 @@ function setupRealTimeUpdates() {
                     localStorage.setItem('fryOrders', JSON.stringify(orders));
                 }
             } else {
+                console.log('⚠️ Firebase não disponível, tentando localStorage...');
                 // Fallback para localStorage
                 const savedOrders = localStorage.getItem('fryOrders');
                 if (savedOrders) {
                     const newOrders = JSON.parse(savedOrders);
                     if (newOrders.length !== orders.length || JSON.stringify(newOrders) !== JSON.stringify(orders)) {
-                        console.log('Novos pedidos detectados no localStorage, atualizando...', newOrders.length, 'pedidos');
+                        console.log('📱 Novos pedidos detectados no localStorage, atualizando...', newOrders.length, 'pedidos');
                         orders = newOrders;
                         updateStats();
                         const currentFilter = document.getElementById('statusFilter')?.value || 'all';
