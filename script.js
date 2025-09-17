@@ -238,7 +238,8 @@ const menuData = {
             description: "40 irresistíveis e deliciosos hots. (De R$ 80,00 por R$ 40,00)",
             price: 40.00,
             emoji: "🍣",
-            category: "bigHots"
+            category: "bigHots",
+            outOfStock: true
         }
     ],
     miniSushiDog: [
@@ -487,6 +488,9 @@ function renderMenu() {
 function createProductElement(product, index) {
     const div = document.createElement('div');
     div.className = 'menu-item';
+    if (product.outOfStock) {
+        div.classList.add('out-of-stock');
+    }
     div.style.animationDelay = `${index * 0.1}s`;
     div.style.opacity = '0';
     div.style.transform = 'translateY(30px)';
@@ -495,25 +499,52 @@ function createProductElement(product, index) {
     // Definir imagem baseada na categoria e nome do produto
     const imageUrl = getProductImage(product);
     
-    div.innerHTML = `
-        <div class="menu-item-image">
-            <img src="${imageUrl}" alt="${product.name}" loading="lazy">
-            <div class="image-overlay">
-                ${product.emoji}
+    // HTML para item esgotado
+    if (product.outOfStock) {
+        div.innerHTML = `
+            <div class="menu-item-image">
+                <img src="${imageUrl}" alt="${product.name}" loading="lazy">
+                <div class="image-overlay">
+                    ${product.emoji}
+                </div>
+                <div class="out-of-stock-ribbon">
+                    <span>ITEM ESGOTADO</span>
+                </div>
             </div>
-        </div>
-        <div class="menu-item-content">
-            <h3 class="menu-item-name">${product.name}</h3>
-            <p class="menu-item-description">${product.description}</p>
-            <div class="menu-item-footer">
-                <span class="menu-item-price">R$ ${product.price.toFixed(2).replace('.', ',')}</span>
-                <button class="add-to-cart-btn" onclick="addToCart(${product.id})">
-                    <span class="btn-text">Adicionar</span>
-                    <span class="btn-icon">+</span>
-                </button>
+            <div class="menu-item-content">
+                <h3 class="menu-item-name">${product.name}</h3>
+                <p class="menu-item-description">${product.description}</p>
+                <div class="menu-item-footer">
+                    <span class="menu-item-price">R$ ${product.price.toFixed(2).replace('.', ',')}</span>
+                    <button class="add-to-cart-btn disabled" disabled>
+                        <span class="btn-text">Esgotado</span>
+                        <span class="btn-icon">❌</span>
+                    </button>
+                </div>
             </div>
-        </div>
-    `;
+        `;
+    } else {
+        // HTML normal para itens disponíveis
+        div.innerHTML = `
+            <div class="menu-item-image">
+                <img src="${imageUrl}" alt="${product.name}" loading="lazy">
+                <div class="image-overlay">
+                    ${product.emoji}
+                </div>
+            </div>
+            <div class="menu-item-content">
+                <h3 class="menu-item-name">${product.name}</h3>
+                <p class="menu-item-description">${product.description}</p>
+                <div class="menu-item-footer">
+                    <span class="menu-item-price">R$ ${product.price.toFixed(2).replace('.', ',')}</span>
+                    <button class="add-to-cart-btn" onclick="addToCart(${product.id})">
+                        <span class="btn-text">Adicionar</span>
+                        <span class="btn-icon">+</span>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
     
     // Adicionar efeito de hover dinâmico
     div.addEventListener('mouseenter', () => {
