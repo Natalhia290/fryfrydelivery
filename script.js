@@ -1506,6 +1506,9 @@ function initializeApp() {
         showPromoModal();
     }, 2000);
     
+    // Inicializar funcionalidades avançadas
+    initializeAdvancedFeatures();
+    
     // Inicializar Firebase em background (sem await)
     initializeFirebase().then(() => {
         console.log('Firebase inicializado com sucesso');
@@ -1890,6 +1893,299 @@ function reopenPromoModal() {
     localStorage.removeItem('fry_promo_last_seen');
     showPromoModal();
 }
+
+// Funcionalidades Avançadas
+function initializeAdvancedFeatures() {
+    // Lazy loading de imagens
+    initializeLazyLoading();
+    
+    // Intersection Observer para animações
+    initializeScrollAnimations();
+    
+    // Performance monitoring
+    initializePerformanceMonitoring();
+    
+    // PWA features
+    initializePWA();
+    
+    // Analytics e tracking
+    initializeAnalytics();
+    
+    // Cache management
+    initializeCacheManagement();
+}
+
+// Lazy Loading Avançado
+function initializeLazyLoading() {
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    if (img.dataset.src) {
+                        img.src = img.dataset.src;
+                        img.classList.remove('lazy');
+                        img.classList.add('loaded');
+                        observer.unobserve(img);
+                    }
+                }
+            });
+        }, {
+            rootMargin: '50px 0px',
+            threshold: 0.01
+        });
+
+        document.querySelectorAll('img[data-src]').forEach(img => {
+            imageObserver.observe(img);
+        });
+    }
+}
+
+// Animações de Scroll
+function initializeScrollAnimations() {
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-in');
+                
+                // Animações específicas por elemento
+                if (entry.target.classList.contains('menu-item')) {
+                    entry.target.style.animation = 'slideInFromBottom 0.6s ease-out forwards';
+                } else if (entry.target.classList.contains('feature')) {
+                    entry.target.style.animation = 'slideInFromLeft 0.6s ease-out forwards';
+                } else if (entry.target.classList.contains('contact-item')) {
+                    entry.target.style.animation = 'slideInFromRight 0.6s ease-out forwards';
+                }
+            }
+        });
+    }, observerOptions);
+
+    // Observar elementos
+    document.querySelectorAll('.menu-item, .feature, .contact-item').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        observer.observe(el);
+    });
+}
+
+// Monitoramento de Performance
+function initializePerformanceMonitoring() {
+    // Core Web Vitals
+    if ('web-vitals' in window) {
+        import('https://unpkg.com/web-vitals@3/dist/web-vitals.js').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+            getCLS(console.log);
+            getFID(console.log);
+            getFCP(console.log);
+            getLCP(console.log);
+            getTTFB(console.log);
+        });
+    }
+
+    // Performance timing
+    window.addEventListener('load', () => {
+        const perfData = performance.getEntriesByType('navigation')[0];
+        console.log('Performance:', {
+            loadTime: perfData.loadEventEnd - perfData.loadEventStart,
+            domContentLoaded: perfData.domContentLoadedEventEnd - perfData.domContentLoadedEventStart,
+            firstPaint: performance.getEntriesByType('paint')[0]?.startTime || 'N/A'
+        });
+    });
+}
+
+// PWA Features
+function initializePWA() {
+    // Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('SW registered: ', registration);
+                })
+                .catch(registrationError => {
+                    console.log('SW registration failed: ', registrationError);
+                });
+        });
+    }
+
+    // Install prompt
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Mostrar botão de instalação
+        showInstallButton();
+    });
+
+    function showInstallButton() {
+        const installBtn = document.createElement('button');
+        installBtn.textContent = '📱 Instalar App';
+        installBtn.className = 'install-btn';
+        installBtn.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--coral);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 25px;
+            cursor: pointer;
+            z-index: 1000;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            transition: all 0.3s ease;
+        `;
+        
+        installBtn.addEventListener('click', () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    }
+                    deferredPrompt = null;
+                    installBtn.remove();
+                });
+            }
+        });
+        
+        document.body.appendChild(installBtn);
+    }
+}
+
+// Analytics e Tracking
+function initializeAnalytics() {
+    // Tracking de eventos
+    function trackEvent(eventName, eventData = {}) {
+        console.log('Event tracked:', eventName, eventData);
+        
+        // Aqui você pode integrar com Google Analytics, Facebook Pixel, etc.
+        if (typeof gtag !== 'undefined') {
+            gtag('event', eventName, eventData);
+        }
+    }
+
+    // Tracking de cliques em produtos
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.add-to-cart-btn')) {
+            const productName = e.target.closest('.menu-item').querySelector('.menu-item-name').textContent;
+            trackEvent('add_to_cart', {
+                product_name: productName,
+                value: parseFloat(e.target.closest('.menu-item').querySelector('.menu-item-price').textContent.replace('R$ ', '').replace(',', '.'))
+            });
+        }
+        
+        if (e.target.closest('.cta-button')) {
+            trackEvent('cta_click', {
+                button_text: e.target.textContent.trim()
+            });
+        }
+    });
+
+    // Tracking de scroll
+    let scrollDepth = 0;
+    window.addEventListener('scroll', () => {
+        const newScrollDepth = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
+        if (newScrollDepth > scrollDepth && newScrollDepth % 25 === 0) {
+            trackEvent('scroll_depth', { depth: newScrollDepth });
+            scrollDepth = newScrollDepth;
+        }
+    });
+}
+
+// Cache Management
+function initializeCacheManagement() {
+    // Cache de imagens
+    const imageCache = new Map();
+    
+    function preloadImage(src) {
+        if (imageCache.has(src)) {
+            return Promise.resolve(imageCache.get(src));
+        }
+        
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                imageCache.set(src, img);
+                resolve(img);
+            };
+            img.onerror = reject;
+            img.src = src;
+        });
+    }
+
+    // Preload de imagens críticas
+    const criticalImages = [
+        'logo.svg',
+        'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'
+    ];
+    
+    criticalImages.forEach(src => {
+        preloadImage(src).catch(console.warn);
+    });
+}
+
+// Melhorias de UX
+function enhanceUX() {
+    // Feedback visual para ações
+    function addVisualFeedback(element, type = 'success') {
+        element.classList.add('loading');
+        setTimeout(() => {
+            element.classList.remove('loading');
+            element.classList.add(type);
+            setTimeout(() => element.classList.remove(type), 2000);
+        }, 1000);
+    }
+
+    // Debounce para scroll
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Throttle para resize
+    function throttle(func, limit) {
+        let inThrottle;
+        return function() {
+            const args = arguments;
+            const context = this;
+            if (!inThrottle) {
+                func.apply(context, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        };
+    }
+
+    // Aplicar debounce ao scroll
+    const debouncedScroll = debounce(() => {
+        // Lógica de scroll otimizada
+    }, 10);
+
+    // Aplicar throttle ao resize
+    const throttledResize = throttle(() => {
+        // Lógica de resize otimizada
+    }, 100);
+
+    window.addEventListener('scroll', debouncedScroll);
+    window.addEventListener('resize', throttledResize);
+}
+
+// Inicializar melhorias de UX
+enhanceUX();
 
 // Inicializar quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', initializeApp);
