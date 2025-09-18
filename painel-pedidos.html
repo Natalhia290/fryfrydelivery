@@ -507,6 +507,7 @@
             <button class="filter-btn reset-btn" onclick="resetAllOrders()" style="background: #ff4444; border-color: #ff4444;">🗑️ Resetar Todos</button>
             <button class="filter-btn" onclick="cleanDuplicates()" style="background: #ff9800; border-color: #ff9800;">🧹 Limpar Duplicatas</button>
             <button class="filter-btn" onclick="playPhoneSound()" style="background: #28a745; border-color: #28a745;">📞 Testar Som</button>
+            <button class="filter-btn" onclick="forceCheckNewOrders()" style="background: #17a2b8; border-color: #17a2b8;">🔍 Verificar Novos</button>
         </div>
 
         <div class="orders-container">
@@ -541,6 +542,7 @@
         let orders = [];
         let currentFilter = 'all';
         let lastOrderCount = 0;
+        let lastOrderIds = [];
         let phoneSound = null;
 
         // Verificar autenticação
@@ -797,13 +799,42 @@
             }
         }
 
+        // Função para forçar detecção de novos pedidos (para teste)
+        function forceCheckNewOrders() {
+            console.log('🔧 Forçando verificação de novos pedidos...');
+            checkForNewOrders();
+        }
+
         // Função para verificar novos pedidos
         function checkForNewOrders() {
-            if (orders.length > lastOrderCount) {
-                console.log(`📞 Novo pedido detectado! Anterior: ${lastOrderCount}, Atual: ${orders.length}`);
-                playPhoneSound();
+            const currentOrderIds = orders.map(o => o.id);
+            console.log(`🔍 Verificando novos pedidos:`);
+            console.log(`📊 Anterior: ${lastOrderCount} pedidos, IDs: [${lastOrderIds.join(', ')}]`);
+            console.log(`📊 Atual: ${orders.length} pedidos, IDs: [${currentOrderIds.join(', ')}]`);
+            
+            // Se é a primeira carga (lastOrderIds está vazio), não tocar som
+            if (lastOrderIds.length === 0) {
+                console.log('🔄 Primeira carga - não tocando som');
                 lastOrderCount = orders.length;
+                lastOrderIds = [...currentOrderIds];
+                return;
             }
+            
+            // Verificar se há novos pedidos (IDs que não estavam na lista anterior)
+            const newOrderIds = currentOrderIds.filter(id => !lastOrderIds.includes(id));
+            
+            if (newOrderIds.length > 0) {
+                console.log(`📞 NOVOS PEDIDOS DETECTADOS! IDs: [${newOrderIds.join(', ')}]`);
+                playPhoneSound();
+            } else if (currentOrderIds.length < lastOrderIds.length) {
+                console.log(`📉 Pedidos removidos: ${lastOrderIds.length - currentOrderIds.length} pedidos`);
+            } else {
+                console.log('📊 Nenhuma mudança nos pedidos');
+            }
+            
+            // Atualizar referências
+            lastOrderCount = orders.length;
+            lastOrderIds = [...currentOrderIds];
         }
 
         // Função para limpar duplicatas do Firebase (caso existam)
