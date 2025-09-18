@@ -506,6 +506,7 @@
             <button class="filter-btn" data-filter="entregue">Entregues</button>
             <button class="filter-btn reset-btn" onclick="resetAllOrders()" style="background: #ff4444; border-color: #ff4444;">🗑️ Resetar Todos</button>
             <button class="filter-btn" onclick="cleanDuplicates()" style="background: #ff9800; border-color: #ff9800;">🧹 Limpar Duplicatas</button>
+            <button class="filter-btn" onclick="playPhoneSound()" style="background: #28a745; border-color: #28a745;">📞 Testar Som</button>
         </div>
 
         <div class="orders-container">
@@ -539,6 +540,8 @@
         let firebaseInitialized = false;
         let orders = [];
         let currentFilter = 'all';
+        let lastOrderCount = 0;
+        let phoneSound = null;
 
         // Verificar autenticação
         function checkAuth() {
@@ -704,6 +707,105 @@
             }
         }
 
+        // Função para criar som de telefone
+        function createPhoneSound() {
+            if (phoneSound) {
+                phoneSound.pause();
+                phoneSound.currentTime = 0;
+            }
+
+            // Criar contexto de áudio
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Frequências para simular toque de telefone
+            const frequencies = [800, 1000]; // Hz
+            const duration = 0.5; // segundos por toque
+            const pause = 0.5; // pausa entre toques
+            const totalDuration = 20; // 20 segundos total
+            
+            let currentTime = 0;
+            const toques = Math.floor(totalDuration / (duration + pause));
+            
+            for (let i = 0; i < toques; i++) {
+                // Toque 1 (frequência baixa)
+                setTimeout(() => {
+                    const oscillator1 = audioContext.createOscillator();
+                    const gainNode1 = audioContext.createGain();
+                    
+                    oscillator1.connect(gainNode1);
+                    gainNode1.connect(audioContext.destination);
+                    
+                    oscillator1.frequency.setValueAtTime(frequencies[0], audioContext.currentTime);
+                    oscillator1.type = 'sine';
+                    
+                    gainNode1.gain.setValueAtTime(0, audioContext.currentTime);
+                    gainNode1.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
+                    gainNode1.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+                    
+                    oscillator1.start(audioContext.currentTime);
+                    oscillator1.stop(audioContext.currentTime + duration);
+                }, currentTime * 1000);
+                
+                currentTime += duration;
+                
+                // Toque 2 (frequência alta)
+                setTimeout(() => {
+                    const oscillator2 = audioContext.createOscillator();
+                    const gainNode2 = audioContext.createGain();
+                    
+                    oscillator2.connect(gainNode2);
+                    gainNode2.connect(audioContext.destination);
+                    
+                    oscillator2.frequency.setValueAtTime(frequencies[1], audioContext.currentTime);
+                    oscillator2.type = 'sine';
+                    
+                    gainNode2.gain.setValueAtTime(0, audioContext.currentTime);
+                    gainNode2.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
+                    gainNode2.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+                    
+                    oscillator2.start(audioContext.currentTime);
+                    oscillator2.stop(audioContext.currentTime + duration);
+                }, currentTime * 1000);
+                
+                currentTime += duration + pause;
+            }
+        }
+
+        // Função para tocar som de telefone
+        function playPhoneSound() {
+            try {
+                console.log('📞 Tocando som de telefone...');
+                createPhoneSound();
+                
+                // Mostrar notificação visual
+                showNotification('📞 NOVO PEDIDO CHEGOU!', 'success');
+                
+                // Vibrar se suportado
+                if (navigator.vibrate) {
+                    navigator.vibrate([200, 100, 200, 100, 200]);
+                }
+                
+            } catch (error) {
+                console.error('Erro ao tocar som:', error);
+                // Fallback: usar som do sistema
+                try {
+                    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBS13yO/eizEIHWq+8+OWT');
+                    audio.play();
+                } catch (fallbackError) {
+                    console.error('Erro no fallback de áudio:', fallbackError);
+                }
+            }
+        }
+
+        // Função para verificar novos pedidos
+        function checkForNewOrders() {
+            if (orders.length > lastOrderCount) {
+                console.log(`📞 Novo pedido detectado! Anterior: ${lastOrderCount}, Atual: ${orders.length}`);
+                playPhoneSound();
+                lastOrderCount = orders.length;
+            }
+        }
+
         // Função para limpar duplicatas do Firebase (caso existam)
         async function cleanDuplicates() {
             if (!firebaseInitialized || !db) {
@@ -807,6 +909,9 @@
                 
                 console.log(`✅ ${orders.length} pedidos únicos carregados do Firebase`);
                 console.log('📋 IDs carregados:', orders.map(o => o.id));
+                
+                // Verificar se há novos pedidos
+                checkForNewOrders();
                 
                 updateStats();
                 renderOrders();
@@ -1149,6 +1254,10 @@
                         if (hasChanges) {
                             console.log('🔄 Atualizando lista de pedidos...');
                             orders = uniqueNewOrders;
+                            
+                            // Verificar se há novos pedidos
+                            checkForNewOrders();
+                            
                             updateStats();
                             renderOrders();
                         }
