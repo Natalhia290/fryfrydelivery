@@ -489,22 +489,94 @@ body {
     color: white !important;
 }
 
-/* Card de Promoção */
+/* Modal de Promoção */
+.promo-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.promo-modal.show {
+    display: flex;
+}
+
+.promo-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    animation: promoOverlayFadeIn 0.3s ease-out;
+}
+
+@keyframes promoOverlayFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 .promo-card {
     background: linear-gradient(135deg, #ff6b6b, #ff8e53, #ff6b6b);
     background-size: 200% 200%;
     animation: promoGradient 3s ease infinite;
     border-radius: 20px;
     padding: 2rem;
-    margin: 2rem 0;
-    box-shadow: 0 15px 35px rgba(255, 107, 107, 0.4);
+    box-shadow: 0 25px 50px rgba(255, 107, 107, 0.6);
     border: 3px solid rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
     position: relative;
     overflow: hidden;
-    max-width: 600px;
+    max-width: 500px;
     width: 100%;
-    animation: promoSlideIn 0.8s ease-out;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: promoModalSlideIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    z-index: 5001;
+}
+
+@keyframes promoModalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.promo-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 2rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 5002;
+    backdrop-filter: blur(10px);
+}
+
+.promo-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+    color: #ff4444;
 }
 
 @keyframes promoGradient {
@@ -513,16 +585,6 @@ body {
     100% { background-position: 0% 50%; }
 }
 
-@keyframes promoSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(50px) scale(0.9);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
 
 .promo-card::before {
     content: '';
@@ -1853,11 +1915,15 @@ body {
         padding: 6rem 0 4rem 0;
     }
     
-    /* Card de Promoção - Mobile */
+    /* Modal de Promoção - Mobile */
+    .promo-modal {
+        padding: 10px;
+    }
+    
     .promo-card {
         padding: 1.5rem;
-        margin: 1.5rem 0;
         max-width: 100%;
+        max-height: 95vh;
     }
     
     .promo-title {
@@ -1883,6 +1949,14 @@ body {
     .promo-btn {
         padding: 0.8rem 1.5rem;
         font-size: 1rem;
+    }
+    
+    .promo-close {
+        top: 10px;
+        right: 10px;
+        width: 35px;
+        height: 35px;
+        font-size: 1.5rem;
     }
 }
 
@@ -1941,10 +2015,14 @@ body {
         padding: 1.5rem;
     }
     
-    /* Card de Promoção - Mobile Pequeno */
+    /* Modal de Promoção - Mobile Pequeno */
+    .promo-modal {
+        padding: 5px;
+    }
+    
     .promo-card {
         padding: 1rem;
-        margin: 1rem 0;
+        max-height: 98vh;
     }
     
     .promo-title {
@@ -1984,6 +2062,14 @@ body {
     .promo-btn {
         padding: 0.7rem 1.2rem;
         font-size: 0.9rem;
+    }
+    
+    .promo-close {
+        top: 8px;
+        right: 8px;
+        width: 30px;
+        height: 30px;
+        font-size: 1.2rem;
     }
 }
 

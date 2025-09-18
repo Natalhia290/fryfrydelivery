@@ -1501,6 +1501,11 @@ function initializeApp() {
         console.error('menuGrid não encontrado!');
     }
     
+    // Mostrar popup de promoção após 2 segundos
+    setTimeout(() => {
+        showPromoModal();
+    }, 2000);
+    
     // Inicializar Firebase em background (sem await)
     initializeFirebase().then(() => {
         console.log('Firebase inicializado com sucesso');
@@ -1825,6 +1830,65 @@ function scrollToMenu() {
             block: 'start'
         });
     }
+}
+
+// Funções do Modal de Promoção
+function showPromoModal() {
+    // Verificar se o usuário já viu o popup hoje
+    const today = new Date().toDateString();
+    const lastSeen = localStorage.getItem('fry_promo_last_seen');
+    
+    if (lastSeen === today) {
+        return; // Não mostrar se já viu hoje
+    }
+    
+    const promoModal = document.getElementById('promoModal');
+    if (promoModal) {
+        promoModal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        
+        // Adicionar event listeners
+        setupPromoModalEvents();
+    }
+}
+
+function closePromoModal() {
+    const promoModal = document.getElementById('promoModal');
+    if (promoModal) {
+        promoModal.classList.remove('show');
+        document.body.style.overflow = 'auto';
+        
+        // Marcar como visto hoje
+        const today = new Date().toDateString();
+        localStorage.setItem('fry_promo_last_seen', today);
+    }
+}
+
+function setupPromoModalEvents() {
+    const promoModal = document.getElementById('promoModal');
+    const promoClose = document.getElementById('promoClose');
+    const promoOverlay = document.getElementById('promoOverlay');
+    
+    if (promoClose) {
+        promoClose.addEventListener('click', closePromoModal);
+    }
+    
+    if (promoOverlay) {
+        promoOverlay.addEventListener('click', closePromoModal);
+    }
+    
+    // Fechar com ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && promoModal.classList.contains('show')) {
+            closePromoModal();
+        }
+    });
+}
+
+// Função para reabrir o modal (útil para testes)
+function reopenPromoModal() {
+    localStorage.removeItem('fry_promo_last_seen');
+    showPromoModal();
 }
 
 // Inicializar quando o DOM estiver carregado
