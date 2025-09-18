@@ -340,6 +340,89 @@
             background: #45a049;
         }
 
+        .status-section {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .edit-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .edit-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .edit-btn:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .notes-btn {
+            background: #ffc107;
+            color: #212529;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .notes-btn:hover {
+            background: #e0a800;
+            transform: translateY(-1px);
+        }
+
+        .order-notes {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 3px solid #ffc107;
+            border-radius: 5px;
+        }
+
+        .notes-title {
+            font-weight: bold;
+            color: #ffc107;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .notes-content {
+            color: #e0e0e0;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
         .no-orders {
             text-align: center;
             padding: 3rem;
@@ -493,6 +576,131 @@
                 localStorage.removeItem('fry_session');
                 alert('Logout realizado com sucesso!');
                 window.location.href = 'index.html';
+            }
+        }
+
+        // Função para editar pedido
+        function editOrder(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) {
+                showError('Pedido não encontrado');
+                return;
+            }
+
+            const newTotal = prompt(`Editar valor total do pedido ${orderId}:\n\nValor atual: R$ ${order.total.toFixed(2).replace('.', ',')}\n\nDigite o novo valor:`, order.total);
+            
+            if (newTotal === null) return; // Usuário cancelou
+            
+            const parsedTotal = parseFloat(newTotal.replace(',', '.'));
+            if (isNaN(parsedTotal) || parsedTotal < 0) {
+                showError('Valor inválido! Digite um número válido.');
+                return;
+            }
+
+            updateOrderField(orderId, 'total', parsedTotal);
+        }
+
+        // Função para apagar pedido
+        async function deleteOrder(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) {
+                showError('Pedido não encontrado');
+                return;
+            }
+
+            const confirmed = confirm(`⚠️ ATENÇÃO!\n\nVocê está prestes a APAGAR o pedido ${orderId}!\n\nCliente: ${order.cliente}\nValor: R$ ${order.total.toFixed(2).replace('.', ',')}\n\nEsta ação NÃO pode ser desfeita!\n\nTem certeza que deseja continuar?`);
+            
+            if (!confirmed) return;
+
+            if (!firebaseInitialized || !db) {
+                showError('Firebase não inicializado');
+                return;
+            }
+
+            try {
+                console.log(`🗑️ Apagando pedido ${orderId}...`);
+                const ordersRef = db.collection('orders');
+                const querySnapshot = await ordersRef.where('id', '==', orderId).get();
+                
+                if (querySnapshot.empty) {
+                    showError('Pedido não encontrado no Firebase');
+                    return;
+                }
+
+                const doc = querySnapshot.docs[0];
+                await doc.ref.delete();
+                
+                console.log(`✅ Pedido ${orderId} apagado com sucesso!`);
+                
+                // Remover da lista local
+                orders = orders.filter(o => o.id !== orderId);
+                updateStats();
+                renderOrders();
+                
+                showNotification(`✅ Pedido ${orderId} apagado com sucesso!`, 'success');
+                
+            } catch (error) {
+                console.error('❌ Erro ao apagar pedido:', error);
+                showError('Erro ao apagar pedido do Firebase');
+            }
+        }
+
+        // Função para adicionar observação
+        function addNotes(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) {
+                showError('Pedido não encontrado');
+                return;
+            }
+
+            const currentNotes = order.notes || '';
+            const newNotes = prompt(`Adicionar observação para o pedido ${orderId}:\n\nObservação atual: ${currentNotes}\n\nDigite a nova observação:`, currentNotes);
+            
+            if (newNotes === null) return; // Usuário cancelou
+            
+            updateOrderField(orderId, 'notes', newNotes);
+        }
+
+        // Função para atualizar campo específico do pedido
+        async function updateOrderField(orderId, field, value) {
+            if (!firebaseInitialized || !db) {
+                showError('Firebase não inicializado');
+                return;
+            }
+
+            try {
+                console.log(`🔄 Atualizando campo ${field} do pedido ${orderId}...`);
+                const ordersRef = db.collection('orders');
+                const querySnapshot = await ordersRef.where('id', '==', orderId).get();
+                
+                if (querySnapshot.empty) {
+                    showError('Pedido não encontrado no Firebase');
+                    return;
+                }
+
+                const doc = querySnapshot.docs[0];
+                await doc.ref.update({
+                    [field]: value,
+                    updatedAt: new Date().toISOString()
+                });
+                
+                console.log(`✅ Campo ${field} atualizado com sucesso!`);
+                
+                // Atualizar na lista local
+                const orderIndex = orders.findIndex(o => o.id === orderId);
+                if (orderIndex !== -1) {
+                    orders[orderIndex][field] = value;
+                    orders[orderIndex].updatedAt = new Date().toISOString();
+                }
+                
+                updateStats();
+                renderOrders();
+                
+                showNotification(`✅ ${field} atualizado com sucesso!`, 'success');
+                
+            } catch (error) {
+                console.error(`❌ Erro ao atualizar ${field}:`, error);
+                showError(`Erro ao atualizar ${field} do pedido`);
             }
         }
 
@@ -694,18 +902,37 @@
                             </div>
                         `).join('')}
                     </div>
-                    <div class="order-actions">
-                        <select class="status-select" data-order-id="${order.id}" onchange="updateOrderStatus('${order.id}', this.value)">
-                            <option value="pendente" ${order.status === 'pendente' ? 'selected' : ''}>Pendente</option>
-                            <option value="preparando" ${order.status === 'preparando' ? 'selected' : ''}>Preparando</option>
-                            <option value="pronto" ${order.status === 'pronto' ? 'selected' : ''}>Pronto</option>
-                            <option value="saiu-entrega" ${order.status === 'saiu-entrega' ? 'selected' : ''}>Saiu para Entrega</option>
-                            <option value="entregue" ${order.status === 'entregue' ? 'selected' : ''}>Entregue</option>
-                        </select>
-                        <button class="update-btn" onclick="updateOrderStatus('${order.id}', document.querySelector('select[data-order-id=\"${order.id}\"]').value)">
-                            Atualizar Status
-                        </button>
-                    </div>
+                    ${order.notes ? `
+                        <div class="order-notes">
+                            <div class="notes-title">📝 Observações:</div>
+                            <div class="notes-content">${order.notes}</div>
+                        </div>
+                    ` : ''}
+                   <div class="order-actions">
+                       <div class="status-section">
+                           <select class="status-select" data-order-id="${order.id}" onchange="updateOrderStatus('${order.id}', this.value)">
+                               <option value="pendente" ${order.status === 'pendente' ? 'selected' : ''}>Pendente</option>
+                               <option value="preparando" ${order.status === 'preparando' ? 'selected' : ''}>Preparando</option>
+                               <option value="pronto" ${order.status === 'pronto' ? 'selected' : ''}>Pronto</option>
+                               <option value="saiu-entrega" ${order.status === 'saiu-entrega' ? 'selected' : ''}>Saiu para Entrega</option>
+                               <option value="entregue" ${order.status === 'entregue' ? 'selected' : ''}>Entregue</option>
+                           </select>
+                           <button class="update-btn" onclick="updateOrderStatus('${order.id}', document.querySelector('select[data-order-id=\"${order.id}\"]').value)">
+                               Atualizar Status
+                           </button>
+                       </div>
+                       <div class="edit-actions">
+                           <button class="edit-btn" onclick="editOrder('${order.id}')" title="Editar Pedido">
+                               ✏️ Editar
+                           </button>
+                           <button class="delete-btn" onclick="deleteOrder('${order.id}')" title="Apagar Pedido">
+                               🗑️ Apagar
+                           </button>
+                           <button class="notes-btn" onclick="addNotes('${order.id}')" title="Adicionar Observação">
+                               📝 Observação
+                           </button>
+                       </div>
+                   </div>
                 </div>
             `).join('');
         }
