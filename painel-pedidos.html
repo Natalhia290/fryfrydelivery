@@ -462,6 +462,267 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Estilos para Gerenciamento de Cardápio */
+        .menu-management-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .menu-management-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .menu-management-title {
+            color: #ff6b6b;
+            font-size: 1.8rem;
+            margin: 0;
+        }
+
+        .add-product-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .add-product-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .menu-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .category-section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .category-title {
+            color: #ff6b6b;
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #ff6b6b;
+            padding-bottom: 0.5rem;
+        }
+
+        .products-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .product-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .product-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            color: white;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .product-description {
+            color: #ccc;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-price {
+            color: #ff6b6b;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-edit, .btn-delete {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-edit {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #138496;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: #1a1a2e;
+            margin: 5% auto;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            background: #ff6b6b;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+
+        .close {
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover {
+            color: #ff4444;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            color: white;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+
+        .btn-cancel, .btn-save {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+
+        .btn-save {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #218838;
+        }
     </style>
 </head>
 <body>
@@ -519,7 +780,93 @@
                 <div class="loading">Carregando pedidos...</div>
             </div>
         </div>
+
+        <!-- Seção de Gerenciamento de Cardápio -->
+        <div class="menu-management-container">
+            <div class="menu-management-header">
+                <h2 class="menu-management-title">🍣 Gerenciar Cardápio</h2>
+                <button class="add-product-btn" onclick="showAddProductModal()">➕ Adicionar Produto</button>
+            </div>
+            
+            <div class="menu-categories">
+                <div class="category-section">
+                    <h3 class="category-title">🍣 Big Hots</h3>
+                    <div id="bigHotsList" class="products-list">
+                        <!-- Produtos serão carregados aqui -->
+                    </div>
+                </div>
+                
+                <div class="category-section">
+                    <h3 class="category-title">🌭 Mini Sushi Dogs</h3>
+                    <div id="miniSushiDogList" class="products-list">
+                        <!-- Produtos serão carregados aqui -->
+                    </div>
+                </div>
+                
+                <div class="category-section">
+                    <h3 class="category-title">🍱 Combos</h3>
+                    <div id="combosList" class="products-list">
+                        <!-- Produtos serão carregados aqui -->
+                    </div>
+                </div>
+                
+                <div class="category-section">
+                    <h3 class="category-title">🍜 Acompanhamentos</h3>
+                    <div id="acompanhamentosList" class="products-list">
+                        <!-- Produtos serão carregados aqui -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
+
+    <!-- Modal para Adicionar/Editar Produto -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Adicionar Produto</h3>
+                <span class="close" onclick="closeProductModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="productForm">
+                    <div class="form-group">
+                        <label for="productName">Nome do Produto:</label>
+                        <input type="text" id="productName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productDescription">Descrição:</label>
+                        <textarea id="productDescription" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productPrice">Preço (R$):</label>
+                        <input type="number" id="productPrice" step="0.01" min="0" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productCategory">Categoria:</label>
+                        <select id="productCategory" required>
+                            <option value="bigHots">🍣 Big Hots</option>
+                            <option value="miniSushiDog">🌭 Mini Sushi Dogs</option>
+                            <option value="combos">🍱 Combos</option>
+                            <option value="acompanhamentos">🍜 Acompanhamentos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productEmoji">Emoji:</label>
+                        <input type="text" id="productEmoji" placeholder="🍣" maxlength="2">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" onclick="closeProductModal()">Cancelar</button>
+                        <button type="submit" class="btn-save">Salvar Produto</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -1317,8 +1664,200 @@
             setupRealTimeUpdates();
         }
 
+        // ===== GERENCIAMENTO DE CARDÁPIO =====
+        let menuData = {};
+        let editingProduct = null;
+
+        // Carregar dados do cardápio
+        async function loadMenuData() {
+            try {
+                // Tentar carregar do localStorage primeiro
+                const savedMenu = localStorage.getItem('fryMenuData');
+                if (savedMenu) {
+                    menuData = JSON.parse(savedMenu);
+                    console.log('📋 Cardápio carregado do localStorage');
+                } else {
+                    // Carregar dados padrão do script.js
+                    menuData = {
+                        bigHots: [
+                            { id: 1, name: "Big Hot de Tilápia", description: "Crocante e gostoso! (De R$ 65,70 por R$ 49,90)", price: 49.90, emoji: "🍣", category: "bigHots" },
+                            { id: 2, name: "Big Hot de Salmão", description: "Crocante e gostoso! (De R$ 83,70 por R$ 59,90)", price: 59.90, emoji: "🍣", category: "bigHots" },
+                            { id: 3, name: "Hot Filadélfia por 15 reais", description: "O mais poderoso dos hots! Super recheado e irresistível.", price: 15.00, emoji: "🍣", category: "bigHots" }
+                        ],
+                        miniSushiDog: [
+                            { id: 4, name: "Mini Sushi Dog Salmão", description: "Mini hot dog de sushi recheado com salmão", price: 27.90, emoji: "🌭", category: "miniSushiDog" },
+                            { id: 5, name: "Mini Sushi Dog Tilápia", description: "Mini hot dog de sushi recheado com tilápia", price: 21.90, emoji: "🌭", category: "miniSushiDog" }
+                        ],
+                        combos: [
+                            { id: 6, name: "Combo Família", description: "2 Big Hots + 4 Mini Sushi Dogs + 2 Acompanhamentos", price: 89.90, emoji: "🍱", category: "combos" }
+                        ],
+                        acompanhamentos: [
+                            { id: 7, name: "Batata Frita", description: "Porção de batata frita crocante", price: 12.90, emoji: "🍟", category: "acompanhamentos" },
+                            { id: 8, name: "Onion Rings", description: "Anéis de cebola empanados", price: 15.90, emoji: "🧅", category: "acompanhamentos" }
+                        ]
+                    };
+                    console.log('📋 Cardápio padrão carregado');
+                }
+                
+                renderMenuCategories();
+            } catch (error) {
+                console.error('❌ Erro ao carregar cardápio:', error);
+            }
+        }
+
+        // Renderizar categorias do cardápio
+        function renderMenuCategories() {
+            const categories = ['bigHots', 'miniSushiDog', 'combos', 'acompanhamentos'];
+            
+            categories.forEach(category => {
+                const container = document.getElementById(category + 'List');
+                if (container && menuData[category]) {
+                    container.innerHTML = menuData[category].map(product => `
+                        <div class="product-item">
+                            <div class="product-info">
+                                <div class="product-name">${product.emoji} ${product.name}</div>
+                                <div class="product-description">${product.description}</div>
+                                <div class="product-price">R$ ${product.price.toFixed(2).replace('.', ',')}</div>
+                            </div>
+                            <div class="product-actions">
+                                <button class="btn-edit" onclick="editProduct(${product.id})">✏️ Editar</button>
+                                <button class="btn-delete" onclick="deleteProduct(${product.id})">🗑️ Excluir</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            });
+        }
+
+        // Mostrar modal para adicionar produto
+        function showAddProductModal() {
+            editingProduct = null;
+            document.getElementById('modalTitle').textContent = 'Adicionar Produto';
+            document.getElementById('productForm').reset();
+            document.getElementById('productEmoji').value = '🍣';
+            document.getElementById('productModal').style.display = 'block';
+        }
+
+        // Editar produto
+        function editProduct(productId) {
+            const product = findProductById(productId);
+            if (product) {
+                editingProduct = product;
+                document.getElementById('modalTitle').textContent = 'Editar Produto';
+                document.getElementById('productName').value = product.name;
+                document.getElementById('productDescription').value = product.description;
+                document.getElementById('productPrice').value = product.price;
+                document.getElementById('productCategory').value = product.category;
+                document.getElementById('productEmoji').value = product.emoji;
+                document.getElementById('productModal').style.display = 'block';
+            }
+        }
+
+        // Excluir produto
+        function deleteProduct(productId) {
+            if (confirm('Tem certeza que deseja excluir este produto?')) {
+                const category = findProductCategory(productId);
+                if (category) {
+                    menuData[category] = menuData[category].filter(p => p.id !== productId);
+                    saveMenuData();
+                    renderMenuCategories();
+                    showNotification('Produto excluído com sucesso!', 'success');
+                }
+            }
+        }
+
+        // Encontrar produto por ID
+        function findProductById(productId) {
+            for (const category in menuData) {
+                const product = menuData[category].find(p => p.id === productId);
+                if (product) return product;
+            }
+            return null;
+        }
+
+        // Encontrar categoria do produto
+        function findProductCategory(productId) {
+            for (const category in menuData) {
+                if (menuData[category].find(p => p.id === productId)) {
+                    return category;
+                }
+            }
+            return null;
+        }
+
+        // Fechar modal
+        function closeProductModal() {
+            document.getElementById('productModal').style.display = 'none';
+            editingProduct = null;
+        }
+
+        // Salvar dados do cardápio
+        function saveMenuData() {
+            localStorage.setItem('fryMenuData', JSON.stringify(menuData));
+            console.log('💾 Cardápio salvo no localStorage');
+        }
+
+        // Gerar novo ID
+        function generateProductId() {
+            let maxId = 0;
+            for (const category in menuData) {
+                menuData[category].forEach(product => {
+                    if (product.id > maxId) maxId = product.id;
+                });
+            }
+            return maxId + 1;
+        }
+
+        // Event listener para o formulário
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('productName').value,
+                description: document.getElementById('productDescription').value,
+                price: parseFloat(document.getElementById('productPrice').value),
+                category: document.getElementById('productCategory').value,
+                emoji: document.getElementById('productEmoji').value || '🍣'
+            };
+
+            if (editingProduct) {
+                // Editar produto existente
+                const category = findProductCategory(editingProduct.id);
+                if (category) {
+                    const productIndex = menuData[category].findIndex(p => p.id === editingProduct.id);
+                    if (productIndex !== -1) {
+                        menuData[category][productIndex] = { ...editingProduct, ...formData };
+                        showNotification('Produto atualizado com sucesso!', 'success');
+                    }
+                }
+            } else {
+                // Adicionar novo produto
+                const newProduct = {
+                    id: generateProductId(),
+                    ...formData
+                };
+                menuData[formData.category].push(newProduct);
+                showNotification('Produto adicionado com sucesso!', 'success');
+            }
+
+            saveMenuData();
+            renderMenuCategories();
+            closeProductModal();
+        });
+
+        // Fechar modal ao clicar fora
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('productModal');
+            if (e.target === modal) {
+                closeProductModal();
+            }
+        });
+
         // Inicializar quando a página carregar
-        window.addEventListener('load', initializeApp);
+        window.addEventListener('load', function() {
+            initializeApp();
+            loadMenuData();
+        });
     </script>
 </body>
 </html>
