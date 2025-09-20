@@ -565,6 +565,9 @@ async function initializeAdmin() {
     setupLogout();
     setupImageUpload();
     
+    // Inicializar gerenciamento de cardápio
+    initializeMenuManagement();
+    
     // Renderizar conteúdo inicial
     updateStats();
     renderOrders('all');
@@ -650,6 +653,356 @@ function setupRealTimeUpdates() {
             console.error('Erro ao verificar menu:', error);
         }
     }, 5000);
+}
+
+// ==================== GERENCIAMENTO DE CARDÁPIO ====================
+
+let currentEditingItem = null;
+let currentFilter = 'all';
+
+// Inicializar gerenciamento de cardápio
+function initializeMenuManagement() {
+    console.log('🍣 Inicializando gerenciamento de cardápio...');
+    
+    // Carregar dados do cardápio
+    loadMenuData();
+    
+    // Event listeners
+    setupMenuEventListeners();
+    
+    // Renderizar cardápio
+    renderMenuGrid();
+}
+
+// Configurar event listeners do cardápio
+function setupMenuEventListeners() {
+    // Botão adicionar item
+    const addItemBtn = document.getElementById('addItemBtn');
+    if (addItemBtn) {
+        addItemBtn.addEventListener('click', () => openMenuModal());
+    }
+    
+    // Modal de cardápio
+    const menuModal = document.getElementById('menuModal');
+    const closeMenuModal = document.getElementById('closeMenuModal');
+    const cancelMenuBtn = document.getElementById('cancelMenuBtn');
+    const saveMenuBtn = document.getElementById('saveMenuBtn');
+    const deleteMenuBtn = document.getElementById('deleteMenuBtn');
+    
+    if (closeMenuModal) {
+        closeMenuModal.addEventListener('click', () => closeMenuModal());
+    }
+    
+    if (cancelMenuBtn) {
+        cancelMenuBtn.addEventListener('click', () => closeMenuModal());
+    }
+    
+    if (saveMenuBtn) {
+        saveMenuBtn.addEventListener('click', () => saveMenuItem());
+    }
+    
+    if (deleteMenuBtn) {
+        deleteMenuBtn.addEventListener('click', () => deleteMenuItem());
+    }
+    
+    // Filtros de categoria
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const category = e.target.dataset.category;
+            filterMenuItems(category);
+        });
+    });
+    
+    // Fechar modal clicando fora
+    if (menuModal) {
+        menuModal.addEventListener('click', (e) => {
+            if (e.target === menuModal) {
+                closeMenuModal();
+            }
+        });
+    }
+}
+
+// Carregar dados do cardápio
+function loadMenuData() {
+    const savedMenu = localStorage.getItem('fryMenuData');
+    if (savedMenu) {
+        try {
+            menuData = JSON.parse(savedMenu);
+            console.log('✅ Cardápio carregado do localStorage');
+        } catch (error) {
+            console.error('❌ Erro ao carregar cardápio:', error);
+            loadDefaultMenu();
+        }
+    } else {
+        loadDefaultMenu();
+    }
+}
+
+// Carregar cardápio padrão
+function loadDefaultMenu() {
+    menuData = {
+        bigHots: [
+            { id: 1, name: "Big Hot de Tilápia", description: "Crocante e gostoso!", price: 49.90, emoji: "🍣", category: "bigHots", available: true },
+            { id: 2, name: "Big Hot de Salmão", description: "Crocante e gostoso!", price: 59.90, emoji: "🍣", category: "bigHots", available: true },
+            { id: 3, name: "Hot Filadélfia por 15 reais", description: "O mais poderoso dos hots! Super recheado e irresistível.", price: 15.00, emoji: "🍣", category: "bigHots", available: true }
+        ],
+        miniSushiDog: [
+            { id: 4, name: "Mini Sushi Dog Salmão", description: "Mini hot dog de sushi recheado com salmão", price: 27.90, emoji: "🌭", category: "miniSushiDog", available: true },
+            { id: 5, name: "Mini Sushi Dog Tilápia", description: "Mini hot dog de sushi recheado com tilápia", price: 21.90, emoji: "🌭", category: "miniSushiDog", available: true }
+        ],
+        sushiRolls: [
+            { id: 6, name: "Sushi Roll Salmão", description: "Delicioso sushi roll com salmão fresco", price: 35.90, emoji: "🍣", category: "sushiRolls", available: true },
+            { id: 7, name: "Sushi Roll Tilápia", description: "Sushi roll com tilápia grelhada", price: 29.90, emoji: "🍣", category: "sushiRolls", available: true }
+        ],
+        bebidas: [
+            { id: 8, name: "Refrigerante Lata", description: "Refrigerante gelado 350ml", price: 4.50, emoji: "🥤", category: "bebidas", available: true },
+            { id: 9, name: "Suco Natural", description: "Suco natural de frutas", price: 6.90, emoji: "🧃", category: "bebidas", available: true }
+        ]
+    };
+    
+    saveMenuData();
+    console.log('✅ Cardápio padrão carregado');
+}
+
+// Salvar dados do cardápio
+function saveMenuData() {
+    try {
+        localStorage.setItem('fryMenuData', JSON.stringify(menuData));
+        console.log('✅ Cardápio salvo no localStorage');
+    } catch (error) {
+        console.error('❌ Erro ao salvar cardápio:', error);
+    }
+}
+
+// Renderizar grid do cardápio
+function renderMenuGrid() {
+    const cardapioGrid = document.getElementById('cardapioGrid');
+    if (!cardapioGrid) return;
+    
+    const allItems = [];
+    Object.values(menuData).forEach(category => {
+        allItems.push(...category);
+    });
+    
+    const filteredItems = currentFilter === 'all' 
+        ? allItems 
+        : allItems.filter(item => item.category === currentFilter);
+    
+    cardapioGrid.innerHTML = filteredItems.map(item => `
+        <div class="menu-item-card ${!item.available ? 'menu-item-unavailable' : ''}" data-id="${item.id}">
+            <div class="menu-item-header">
+                <h3 class="menu-item-title">${item.name}</h3>
+                <span class="menu-item-price">R$ ${item.price.toFixed(2).replace('.', ',')}</span>
+            </div>
+            <p class="menu-item-description">${item.description}</p>
+            <div class="menu-item-meta">
+                <span class="menu-item-category">${getCategoryName(item.category)}</span>
+                <span class="menu-item-emoji">${item.emoji}</span>
+            </div>
+            <div class="menu-item-actions">
+                <button class="edit-menu-btn" onclick="editMenuItem(${item.id})">✏️ Editar</button>
+                <button class="delete-menu-btn" onclick="confirmDeleteMenuItem(${item.id})">🗑️ Excluir</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Obter nome da categoria
+function getCategoryName(category) {
+    const names = {
+        'bigHots': 'Big Hots',
+        'miniSushiDog': 'Mini Sushi Dogs',
+        'sushiRolls': 'Sushi Rolls',
+        'bebidas': 'Bebidas'
+    };
+    return names[category] || category;
+}
+
+// Filtrar itens do cardápio
+function filterMenuItems(category) {
+    currentFilter = category;
+    
+    // Atualizar botões de filtro
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-category="${category}"]`).classList.add('active');
+    
+    // Renderizar grid filtrado
+    renderMenuGrid();
+}
+
+// Abrir modal de cardápio
+function openMenuModal(itemId = null) {
+    const modal = document.getElementById('menuModal');
+    const title = document.getElementById('menuModalTitle');
+    const deleteBtn = document.getElementById('deleteMenuBtn');
+    
+    if (itemId) {
+        // Modo edição
+        currentEditingItem = itemId;
+        title.textContent = 'Editar Produto';
+        deleteBtn.style.display = 'inline-block';
+        fillMenuForm(itemId);
+    } else {
+        // Modo adição
+        currentEditingItem = null;
+        title.textContent = 'Adicionar Produto';
+        deleteBtn.style.display = 'none';
+        clearMenuForm();
+    }
+    
+    modal.style.display = 'flex';
+}
+
+// Fechar modal de cardápio
+function closeMenuModal() {
+    const modal = document.getElementById('menuModal');
+    modal.style.display = 'none';
+    currentEditingItem = null;
+    clearMenuForm();
+}
+
+// Preencher formulário de edição
+function fillMenuForm(itemId) {
+    const item = findMenuItemById(itemId);
+    if (!item) return;
+    
+    document.getElementById('productName').value = item.name;
+    document.getElementById('productDescription').value = item.description;
+    document.getElementById('productPrice').value = item.price;
+    document.getElementById('productEmoji').value = item.emoji;
+    document.getElementById('productCategory').value = item.category;
+    document.getElementById('productImage').value = item.image || '';
+    document.getElementById('productAvailable').checked = item.available;
+}
+
+// Limpar formulário
+function clearMenuForm() {
+    document.getElementById('menuForm').reset();
+    document.getElementById('productAvailable').checked = true;
+}
+
+// Encontrar item por ID
+function findMenuItemById(id) {
+    for (const category of Object.values(menuData)) {
+        const item = category.find(item => item.id === id);
+        if (item) return item;
+    }
+    return null;
+}
+
+// Salvar item do cardápio
+function saveMenuItem() {
+    const form = document.getElementById('menuForm');
+    const formData = new FormData(form);
+    
+    const itemData = {
+        name: formData.get('name'),
+        description: formData.get('description'),
+        price: parseFloat(formData.get('price')),
+        emoji: formData.get('emoji') || '🍣',
+        category: formData.get('category'),
+        image: formData.get('image') || '',
+        available: formData.get('available') === 'on'
+    };
+    
+    // Validação
+    if (!itemData.name || !itemData.description || !itemData.price) {
+        alert('Por favor, preencha todos os campos obrigatórios.');
+        return;
+    }
+    
+    if (currentEditingItem) {
+        // Editar item existente
+        updateMenuItem(currentEditingItem, itemData);
+    } else {
+        // Adicionar novo item
+        addMenuItem(itemData);
+    }
+    
+    closeMenuModal();
+    renderMenuGrid();
+}
+
+// Adicionar novo item
+function addMenuItem(itemData) {
+    const newId = getNextItemId();
+    const newItem = { ...itemData, id: newId };
+    
+    if (!menuData[itemData.category]) {
+        menuData[itemData.category] = [];
+    }
+    
+    menuData[itemData.category].push(newItem);
+    saveMenuData();
+    
+    console.log('✅ Item adicionado:', newItem);
+    showNotification('Produto adicionado com sucesso!', 'success');
+}
+
+// Atualizar item existente
+function updateMenuItem(itemId, itemData) {
+    for (const category of Object.keys(menuData)) {
+        const itemIndex = menuData[category].findIndex(item => item.id === itemId);
+        if (itemIndex !== -1) {
+            menuData[category][itemIndex] = { ...itemData, id: itemId };
+            saveMenuData();
+            console.log('✅ Item atualizado:', itemData);
+            showNotification('Produto atualizado com sucesso!', 'success');
+            return;
+        }
+    }
+}
+
+// Excluir item
+function deleteMenuItem() {
+    if (!currentEditingItem) return;
+    
+    for (const category of Object.keys(menuData)) {
+        const itemIndex = menuData[category].findIndex(item => item.id === currentEditingItem);
+        if (itemIndex !== -1) {
+            menuData[category].splice(itemIndex, 1);
+            saveMenuData();
+            console.log('✅ Item excluído:', currentEditingItem);
+            showNotification('Produto excluído com sucesso!', 'success');
+            return;
+        }
+    }
+}
+
+// Confirmar exclusão
+function confirmDeleteMenuItem(itemId) {
+    if (confirm('Tem certeza que deseja excluir este produto?')) {
+        currentEditingItem = itemId;
+        deleteMenuItem();
+        closeMenuModal();
+        renderMenuGrid();
+    }
+}
+
+// Editar item
+function editMenuItem(itemId) {
+    openMenuModal(itemId);
+}
+
+// Obter próximo ID
+function getNextItemId() {
+    let maxId = 0;
+    Object.values(menuData).forEach(category => {
+        category.forEach(item => {
+            if (item.id > maxId) maxId = item.id;
+        });
+    });
+    return maxId + 1;
+}
+
+// Mostrar notificação
+function showNotification(message, type = 'info') {
+    // Implementar sistema de notificações se necessário
+    console.log(`${type.toUpperCase()}: ${message}`);
 }
 
 // Inicializar quando a página carregar
