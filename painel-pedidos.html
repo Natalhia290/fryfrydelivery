@@ -745,6 +745,28 @@
         .btn-save:hover {
             background: #218838;
         }
+        
+        .image-preview {
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .image-preview img {
+            max-width: 200px;
+            max-height: 150px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        
+        #removeImageBtn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -883,6 +905,13 @@
                     <div class="form-group">
                         <label for="productEmoji">Emoji:</label>
                         <input type="text" id="productEmoji" placeholder="🍣" maxlength="2">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productImage">Imagem do Produto:</label>
+                        <input type="file" id="productImage" accept="image/*" onchange="handleImageUpload(event)">
+                        <div id="imagePreview" class="image-preview"></div>
+                        <button type="button" id="removeImageBtn" onclick="removeProductImage()" style="display: none;">Remover Imagem</button>
                     </div>
                     
                     <div class="form-actions">
@@ -1828,6 +1857,49 @@
         function closeProductModal() {
             document.getElementById('productModal').style.display = 'none';
             editingProduct = null;
+            // Limpar preview da imagem
+            clearImagePreview();
+        }
+        
+        // Variável para armazenar imagem temporária
+        let tempProductImage = null;
+        
+        // Função para lidar com upload de imagem
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    tempProductImage = e.target.result;
+                    showImagePreview(tempProductImage);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // Mostrar preview da imagem
+        function showImagePreview(imageData) {
+            const preview = document.getElementById('imagePreview');
+            const removeBtn = document.getElementById('removeImageBtn');
+            
+            preview.innerHTML = `<img src="${imageData}" alt="Preview">`;
+            removeBtn.style.display = 'block';
+        }
+        
+        // Remover imagem
+        function removeProductImage() {
+            tempProductImage = null;
+            clearImagePreview();
+            document.getElementById('productImage').value = '';
+        }
+        
+        // Limpar preview da imagem
+        function clearImagePreview() {
+            const preview = document.getElementById('imagePreview');
+            const removeBtn = document.getElementById('removeImageBtn');
+            
+            preview.innerHTML = '';
+            removeBtn.style.display = 'none';
         }
 
         // Salvar dados do cardápio e sincronizar
@@ -1921,6 +1993,13 @@
                     if (productIndex !== -1) {
                         menuData[category][productIndex] = { ...editingProduct, ...formData };
                         console.log('✏️ Produto editado:', menuData[category][productIndex]);
+                        
+                        // Salvar imagem se houver
+                        if (tempProductImage) {
+                            localStorage.setItem(`product_image_${editingProduct.id}`, tempProductImage);
+                            console.log(`✅ Imagem salva para produto ${editingProduct.id}`);
+                        }
+                        
                         showNotification('Produto atualizado com sucesso!', 'success');
                     }
                 }
@@ -1932,6 +2011,13 @@
                 };
                 menuData[formData.category].push(newProduct);
                 console.log('➕ Produto adicionado:', newProduct);
+                
+                // Salvar imagem se houver
+                if (tempProductImage) {
+                    localStorage.setItem(`product_image_${newProduct.id}`, tempProductImage);
+                    console.log(`✅ Imagem salva para produto ${newProduct.id}`);
+                }
+                
                 showNotification('Produto adicionado com sucesso!', 'success');
             }
 
