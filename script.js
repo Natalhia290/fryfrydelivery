@@ -24,8 +24,8 @@ try {
     console.error('❌ Erro ao inicializar Firebase:', error);
 }
 
-// Dados do cardápio - carregados do Firebase
-let menuData = {};
+        // Dados do cardápio - APENAS do Firebase
+        let menuData = {};
 
 // Sistema de imagens personalizadas
 let productImages = {};
