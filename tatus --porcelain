@@ -1,0 +1,153 @@
+[1mdiff --git a/script.js b/script.js[m
+[1mindex 9e9ff0d..31f267f 100644[m
+[1m--- a/script.js[m
+[1m+++ b/script.js[m
+[36m@@ -653,16 +653,10 @@[m [mfunction updateCheckoutButton() {[m
+     const checkoutBtn = document.getElementById('checkoutBtn');[m
+     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);[m
+     [m
+[31m-    if (total < 50) {[m
+[31m-        const remaining = (50 - total).toFixed(2).replace('.', ',');[m
+[31m-        checkoutBtn.innerHTML = `Adicione R$ ${remaining} para finalizar`;[m
+[31m-        checkoutBtn.style.background = '#ffc107';[m
+[31m-        checkoutBtn.disabled = true;[m
+[31m-    } else {[m
+[31m-        checkoutBtn.innerHTML = 'Enviar Pedido no WhatsApp';[m
+[31m-        checkoutBtn.style.background = '';[m
+[31m-        checkoutBtn.disabled = false;[m
+[31m-    }[m
+[32m+[m[32m    // Removido pedido mínimo - sempre habilitado[m
+[32m+[m[32m    checkoutBtn.innerHTML = 'Enviar Pedido no WhatsApp';[m
+[32m+[m[32m    checkoutBtn.style.background = '';[m
+[32m+[m[32m    checkoutBtn.disabled = false;[m
+ }[m
+ [m
+ function updateCartCount() {[m
+[36m@@ -793,12 +787,7 @@[m [masync function processCheckout() {[m
+         return;[m
+     }[m
+     [m
+[31m-    // Validar pedido mínimo de R$ 50[m
+[31m-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);[m
+[31m-    if (total < 50) {[m
+[31m-        showNotification(`Pedido mínimo de R$ 50,00. Seu pedido atual: R$ ${total.toFixed(2).replace('.', ',')}`, 'error');[m
+[31m-        return;[m
+[31m-    }[m
+[32m+[m[32m    // Pedido mínimo removido - qualquer valor é aceito[m
+     [m
+     // Animação do botão[m
+     checkoutBtn.style.transform = 'scale(0.95)';[m
+[36m@@ -986,7 +975,7 @@[m [mfunction sendWhatsAppMessage(customerPhone, message) {[m
+     }[m
+ }[m
+ [m
+[31m-// Gerar mensagem de pedido do cliente para a loja[m
+[32m+[m[32m// Gerar mensagem de pedido do cliente para a loja (SIMPLIFICADA)[m
+ function generateCustomerOrderMessage(customerName) {[m
+     const now = new Date();[m
+     const orderId = generateOrderId();[m
+[36m@@ -994,38 +983,21 @@[m [mfunction generateCustomerOrderMessage(customerName) {[m
+     const customerAddress = document.getElementById('customerAddress').value;[m
+     const customerSector = document.getElementById('customerSector').value;[m
+     [m
+[31m-    let message = '🍣 *PEDIDO FRY - Sushi Delivery* 🍣\n\n';[m
+[31m-    message += `📋 *PEDIDO #${orderId}*\n`;[m
+[31m-    message += `🕐 ${now.toLocaleString('pt-BR')}\n\n`;[m
+[32m+[m[32m    let message = `🍣 *NOVO PEDIDO FRY* #${orderId}\n\n`;[m
+     [m
+[31m-    message += '👤 *DADOS DO CLIENTE:*\n';[m
+[31m-    message += `• Nome: ${customerName}\n`;[m
+[31m-    message += `• Endereço: ${customerAddress}\n`;[m
+[31m-    message += `• Setor: ${customerSector}\n\n`;[m
+[32m+[m[32m    message += `👤 *Cliente:* ${customerName}\n`;[m
+[32m+[m[32m    message += `📱 *WhatsApp:* ${document.getElementById('customerPhone').value}\n`;[m
+[32m+[m[32m    message += `🏠 *Endereço:* ${customerAddress}\n`;[m
+[32m+[m[32m    message += `📍 *Setor:* ${customerSector}\n\n`;[m
+     [m
+[31m-    message += '🍱 *ITENS DO PEDIDO:*\n';[m
+[32m+[m[32m    message += `🍱 *PEDIDO:*\n`;[m
+     cart.forEach((item, index) => {[m
+[31m-        message += `${index + 1}. ${item.name}\n`;[m
+[31m-        message += `   Quantidade: ${item.quantity}x\n`;[m
+[31m-        message += `   Preço unitário: R$ ${item.price.toFixed(2).replace('.', ',')}\n`;[m
+[31m-        message += `   Subtotal: R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}\n\n`;[m
+[32m+[m[32m        message += `${index + 1}. ${item.name} - ${item.quantity}x = R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}\n`;[m
+     });[m
+     [m
+[31m-    message += `💰 *VALOR TOTAL: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;[m
+[31m-    [m
+[31m-    message += '📝 *INFORMAÇÕES ADICIONAIS:*\n';[m
+[31m-    message += '• 🏠 Endereço de entrega: [INFORME AQUI]\n';[m
+[31m-    message += '• 📍 Ponto de referência: [OPCIONAL]\n';[m
+[31m-    message += '• 💰 Forma de pagamento: [PIX/DINHEIRO/CARTÃO]\n';[m
+[31m-    message += '• 📝 Observações: [SE HOUVER]\n\n';[m
+[31m-    [m
+[31m-    message += '🚚 *INFORMAÇÕES DE ENTREGA:*\n';[m
+[31m-    message += '• ⏱️ Tempo estimado: 30-45 minutos\n';[m
+[31m-    message += '• 💰 Taxa de entrega: Calculada no WhatsApp\n';[m
+[31m-    message += '• 🆓 Entregas a partir de R$ 100,00: Grátis\n';[m
+[31m-    message += '• 📍 Área de entrega: Goiânia e Região Metropolitana\n\n';[m
+[31m-    [m
+[31m-    message += 'Obrigado! 🙏';[m
+[32m+[m[32m    message += `\n💰 *TOTAL: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;[m
+[32m+[m[32m    message += `🕐 ${now.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit' })}\n`;[m
+[32m+[m[32m    message += `📱 Entrega calculada no WhatsApp`;[m
+     [m
+     return message;[m
+ }[m
+[36m@@ -1049,7 +1021,7 @@[m [mfunction generateOrderId() {[m
+     return orderId;[m
+ }[m
+ [m
+[31m-// Salvar pedido no Firebase e localStorage[m
+[32m+[m[32m// Salvar pedido no Firebase e localStorage (MELHORADO)[m
+ async function saveOrderToFirebase(customerName, customerPhone) {[m
+     const customerAddress = document.getElementById('customerAddress').value;[m
+     const customerSector = document.getElementById('customerSector').value;[m
+[36m@@ -1065,56 +1037,41 @@[m [masync function saveOrderToFirebase(customerName, customerPhone) {[m
+         endereco: customerAddress,[m
+         setor: customerSector,[m
+         notes: '',[m
+[31m-        updatedAt: new Date().toISOString()[m
+[32m+[m[32m        updatedAt: new Date().toISOString(),[m
+[32m+[m[32m        // Adicionar timestamp único para evitar duplicatas[m
+[32m+[m[32m        uniqueId: Date.now() + Math.random()[m
+     };[m
+     [m
+[31m-    // Salvar no Firebase PRIMEIRO (fonte principal)[m
+[32m+[m[32m    // SEMPRE salvar no localStorage PRIMEIRO (mais confiável)[m
+[32m+[m[32m    try {[m
+[32m+[m[32m        const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');[m
+[32m+[m[41m        [m
+[32m+[m[32m        // Verificar se já existe um pedido com o mesmo ID[m
+[32m+[m[32m        const existingOrder = orders.find(o => o.id === order.id);[m
+[32m+[m[32m        if (existingOrder) {[m
+[32m+[m[32m            console.log('⚠️ Pedido já existe, atualizando...');[m
+[32m+[m[32m            const index = orders.findIndex(o => o.id === order.id);[m
+[32m+[m[32m            orders[index] = order;[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            orders.unshift(order);[m
+[32m+[m[32m        }[m
+[32m+[m[41m        [m
+[32m+[m[32m        localStorage.setItem('fryOrders', JSON.stringify(orders));[m
+[32m+[m[32m        console.log('✅ Pedido salvo no localStorage:', order.id);[m
+[32m+[m[41m        [m
+[32m+[m[32m    } catch (error) {[m
+[32m+[m[32m        console.error('❌ Erro ao salvar no localStorage:', error);[m
+[32m+[m[32m    }[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Depois tentar salvar no Firebase (opcional)[m
+     if (firebaseInitialized && db) {[m
+         try {[m
+[31m-            // Usar Firebase v8 (compat) para consistência[m
+             const docRef = await db.collection('orders').add(order);[m
+[31m-            console.log('✅ Pedido salvo no Firebase com ID:', docRef.id);[m
+[31m-            console.log('📊 Dados do pedido:', order);[m
+[31m-            [m
+[31m-            // Salvar no localStorage apenas como backup[m
+[31m-            const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');[m
+[31m-            orders.unshift(order);[m
+[31m-            localStorage.setItem('fryOrders', JSON.stringify(orders));[m
+[31m-            console.log('💾 Backup salvo no localStorage');[m
+[31m-            [m
+[32m+[m[32m            console.log('✅ Pedido também sa

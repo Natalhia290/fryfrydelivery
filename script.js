@@ -653,16 +653,10 @@ function updateCheckoutButton() {
     const checkoutBtn = document.getElementById('checkoutBtn');
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    if (total < 50) {
-        const remaining = (50 - total).toFixed(2).replace('.', ',');
-        checkoutBtn.innerHTML = `Adicione R$ ${remaining} para finalizar`;
-        checkoutBtn.style.background = '#ffc107';
-        checkoutBtn.disabled = true;
-    } else {
-        checkoutBtn.innerHTML = 'Enviar Pedido no WhatsApp';
-        checkoutBtn.style.background = '';
-        checkoutBtn.disabled = false;
-    }
+    // Removido pedido mínimo - sempre habilitado
+    checkoutBtn.innerHTML = 'Enviar Pedido no WhatsApp';
+    checkoutBtn.style.background = '';
+    checkoutBtn.disabled = false;
 }
 
 function updateCartCount() {
@@ -793,12 +787,7 @@ async function processCheckout() {
         return;
     }
     
-    // Validar pedido mínimo de R$ 50
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    if (total < 50) {
-        showNotification(`Pedido mínimo de R$ 50,00. Seu pedido atual: R$ ${total.toFixed(2).replace('.', ',')}`, 'error');
-        return;
-    }
+    // Pedido mínimo removido - qualquer valor é aceito
     
     // Animação do botão
     checkoutBtn.style.transform = 'scale(0.95)';
@@ -986,7 +975,7 @@ function sendWhatsAppMessage(customerPhone, message) {
     }
 }
 
-// Gerar mensagem de pedido do cliente para a loja
+// Gerar mensagem de pedido do cliente para a loja (SIMPLIFICADA)
 function generateCustomerOrderMessage(customerName) {
     const now = new Date();
     const orderId = generateOrderId();
@@ -994,38 +983,21 @@ function generateCustomerOrderMessage(customerName) {
     const customerAddress = document.getElementById('customerAddress').value;
     const customerSector = document.getElementById('customerSector').value;
     
-    let message = '🍣 *PEDIDO FRY - Sushi Delivery* 🍣\n\n';
-    message += `📋 *PEDIDO #${orderId}*\n`;
-    message += `🕐 ${now.toLocaleString('pt-BR')}\n\n`;
+    let message = `🍣 *NOVO PEDIDO FRY* #${orderId}\n\n`;
     
-    message += '👤 *DADOS DO CLIENTE:*\n';
-    message += `• Nome: ${customerName}\n`;
-    message += `• Endereço: ${customerAddress}\n`;
-    message += `• Setor: ${customerSector}\n\n`;
+    message += `👤 *Cliente:* ${customerName}\n`;
+    message += `📱 *WhatsApp:* ${document.getElementById('customerPhone').value}\n`;
+    message += `🏠 *Endereço:* ${customerAddress}\n`;
+    message += `📍 *Setor:* ${customerSector}\n\n`;
     
-    message += '🍱 *ITENS DO PEDIDO:*\n';
+    message += `🍱 *PEDIDO:*\n`;
     cart.forEach((item, index) => {
-        message += `${index + 1}. ${item.name}\n`;
-        message += `   Quantidade: ${item.quantity}x\n`;
-        message += `   Preço unitário: R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
-        message += `   Subtotal: R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}\n\n`;
+        message += `${index + 1}. ${item.name} - ${item.quantity}x = R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}\n`;
     });
     
-    message += `💰 *VALOR TOTAL: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
-    
-    message += '📝 *INFORMAÇÕES ADICIONAIS:*\n';
-    message += '• 🏠 Endereço de entrega: [INFORME AQUI]\n';
-    message += '• 📍 Ponto de referência: [OPCIONAL]\n';
-    message += '• 💰 Forma de pagamento: [PIX/DINHEIRO/CARTÃO]\n';
-    message += '• 📝 Observações: [SE HOUVER]\n\n';
-    
-    message += '🚚 *INFORMAÇÕES DE ENTREGA:*\n';
-    message += '• ⏱️ Tempo estimado: 30-45 minutos\n';
-    message += '• 💰 Taxa de entrega: Calculada no WhatsApp\n';
-    message += '• 🆓 Entregas a partir de R$ 100,00: Grátis\n';
-    message += '• 📍 Área de entrega: Goiânia e Região Metropolitana\n\n';
-    
-    message += 'Obrigado! 🙏';
+    message += `\n💰 *TOTAL: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
+    message += `🕐 ${now.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit' })}\n`;
+    message += `📱 Entrega calculada no WhatsApp`;
     
     return message;
 }
@@ -1049,7 +1021,7 @@ function generateOrderId() {
     return orderId;
 }
 
-// Salvar pedido no Firebase e localStorage
+// Salvar pedido no Firebase e localStorage (MELHORADO)
 async function saveOrderToFirebase(customerName, customerPhone) {
     const customerAddress = document.getElementById('customerAddress').value;
     const customerSector = document.getElementById('customerSector').value;
@@ -1065,56 +1037,41 @@ async function saveOrderToFirebase(customerName, customerPhone) {
         endereco: customerAddress,
         setor: customerSector,
         notes: '',
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        // Adicionar timestamp único para evitar duplicatas
+        uniqueId: Date.now() + Math.random()
     };
     
-    // Salvar no Firebase PRIMEIRO (fonte principal)
+    // SEMPRE salvar no localStorage PRIMEIRO (mais confiável)
+    try {
+        const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
+        
+        // Verificar se já existe um pedido com o mesmo ID
+        const existingOrder = orders.find(o => o.id === order.id);
+        if (existingOrder) {
+            console.log('⚠️ Pedido já existe, atualizando...');
+            const index = orders.findIndex(o => o.id === order.id);
+            orders[index] = order;
+        } else {
+            orders.unshift(order);
+        }
+        
+        localStorage.setItem('fryOrders', JSON.stringify(orders));
+        console.log('✅ Pedido salvo no localStorage:', order.id);
+        
+    } catch (error) {
+        console.error('❌ Erro ao salvar no localStorage:', error);
+    }
+    
+    // Depois tentar salvar no Firebase (opcional)
     if (firebaseInitialized && db) {
         try {
-            // Usar Firebase v8 (compat) para consistência
             const docRef = await db.collection('orders').add(order);
-            console.log('✅ Pedido salvo no Firebase com ID:', docRef.id);
-            console.log('📊 Dados do pedido:', order);
-            
-            // Salvar no localStorage apenas como backup
-            const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
-            orders.unshift(order);
-            localStorage.setItem('fryOrders', JSON.stringify(orders));
-            console.log('💾 Backup salvo no localStorage');
-            
+            console.log('✅ Pedido também salvo no Firebase:', docRef.id);
         } catch (error) {
-            console.error('❌ Erro ao salvar no Firebase:', error);
-            console.log('🔄 Tentando novamente em 2 segundos...');
-            
-            // Tentar novamente após 2 segundos
-            setTimeout(async () => {
-                try {
-                    await db.collection('orders').add(order);
-                    console.log('✅ Pedido salvo no Firebase na segunda tentativa');
-                    
-                    // Salvar no localStorage como backup
-                    const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
-                    orders.unshift(order);
-                    localStorage.setItem('fryOrders', JSON.stringify(orders));
-                    
-                } catch (retryError) {
-                    console.error('❌ Erro na segunda tentativa:', retryError);
-                    console.log('⚠️ Salvando apenas no localStorage como fallback');
-                    
-                    // Fallback para localStorage
-                    const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
-                    orders.unshift(order);
-                    localStorage.setItem('fryOrders', JSON.stringify(orders));
-                }
-            }, 2000);
+            console.error('❌ Erro ao salvar no Firebase (não crítico):', error);
+            // Não falhar se Firebase der erro, localStorage já salvou
         }
-    } else {
-        console.log('⚠️ Firebase não inicializado, salvando apenas no localStorage');
-        
-        // Fallback para localStorage
-        const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
-        orders.unshift(order);
-        localStorage.setItem('fryOrders', JSON.stringify(orders));
     }
     
     // Notificar administrador
@@ -1281,52 +1238,105 @@ function initializeAdminPanel() {
 }
 
 function updateAdminStats() {
-    const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
-    const today = new Date().toDateString();
-    
-    // Filtrar pedidos de hoje
-    const todayOrders = orders.filter(order => {
-        const orderDate = new Date(order.timestamp).toDateString();
-        return orderDate === today;
-    });
-    
-    // Calcular estatísticas
-    const totalOrders = todayOrders.length;
-    const totalRevenue = todayOrders.reduce((sum, order) => sum + order.total, 0);
-    
-    // Atualizar interface
-    const totalOrdersEl = document.getElementById('totalOrders');
-    const totalRevenueEl = document.getElementById('totalRevenue');
-    
-    if (totalOrdersEl) totalOrdersEl.textContent = totalOrders;
-    if (totalRevenueEl) totalRevenueEl.textContent = `R$ ${totalRevenue.toFixed(2).replace('.', ',')}`;
+    try {
+        const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
+        const today = new Date().toDateString();
+        
+        console.log('📊 Atualizando estatísticas. Total de pedidos:', orders.length);
+        
+        // Filtrar pedidos válidos de hoje
+        const todayOrders = orders.filter(order => {
+            if (!order || !order.timestamp || order.total === undefined) {
+                return false;
+            }
+            const orderDate = new Date(order.timestamp).toDateString();
+            return orderDate === today;
+        });
+        
+        console.log('📅 Pedidos de hoje:', todayOrders.length);
+        
+        // Calcular estatísticas
+        const totalOrders = todayOrders.length;
+        const totalRevenue = todayOrders.reduce((sum, order) => {
+            const total = parseFloat(order.total) || 0;
+            return sum + total;
+        }, 0);
+        
+        // Atualizar interface
+        const totalOrdersEl = document.getElementById('totalOrders');
+        const totalRevenueEl = document.getElementById('totalRevenue');
+        
+        if (totalOrdersEl) {
+            totalOrdersEl.textContent = totalOrders;
+            console.log('✅ Total de pedidos atualizado:', totalOrders);
+        }
+        
+        if (totalRevenueEl) {
+            totalRevenueEl.textContent = `R$ ${totalRevenue.toFixed(2).replace('.', ',')}`;
+            console.log('✅ Faturamento atualizado:', totalRevenue);
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro ao atualizar estatísticas:', error);
+        
+        // Fallback em caso de erro
+        const totalOrdersEl = document.getElementById('totalOrders');
+        const totalRevenueEl = document.getElementById('totalRevenue');
+        
+        if (totalOrdersEl) totalOrdersEl.textContent = '0';
+        if (totalRevenueEl) totalRevenueEl.textContent = 'R$ 0,00';
+    }
 }
 
 function loadRecentOrders() {
-    const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
-    const recentOrdersEl = document.getElementById('recentOrders');
-    
-    if (!recentOrdersEl) return;
-    
-    // Ordenar por timestamp (mais recentes primeiro)
-    const sortedOrders = orders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    
-    // Mostrar apenas os 5 mais recentes
-    const recentOrders = sortedOrders.slice(0, 5);
-    
-    if (recentOrders.length === 0) {
-        recentOrdersEl.innerHTML = '<p style="text-align: center; color: #666; padding: 1rem;">Nenhum pedido ainda</p>';
-        return;
+    try {
+        const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
+        const recentOrdersEl = document.getElementById('recentOrders');
+        
+        if (!recentOrdersEl) return;
+        
+        console.log('📊 Carregando pedidos:', orders.length);
+        
+        // Filtrar pedidos válidos e ordenar por timestamp
+        const validOrders = orders.filter(order => 
+            order && 
+            order.id && 
+            order.timestamp && 
+            order.total !== undefined
+        );
+        
+        const sortedOrders = validOrders.sort((a, b) => {
+            const dateA = new Date(a.timestamp);
+            const dateB = new Date(b.timestamp);
+            return dateB - dateA; // Mais recentes primeiro
+        });
+        
+        // Mostrar apenas os 10 mais recentes (aumentado de 5 para 10)
+        const recentOrders = sortedOrders.slice(0, 10);
+        
+        console.log('📋 Pedidos recentes encontrados:', recentOrders.length);
+        
+        if (recentOrders.length === 0) {
+            recentOrdersEl.innerHTML = '<p style="text-align: center; color: #666; padding: 1rem;">Nenhum pedido ainda</p>';
+            return;
+        }
+        
+        recentOrdersEl.innerHTML = recentOrders.map(order => `
+            <div class="order-item">
+                <div class="order-id">Pedido #${order.id}</div>
+                <div class="order-customer">${order.cliente || order.customer?.name || 'Cliente'}</div>
+                <div class="order-total">R$ ${order.total.toFixed(2).replace('.', ',')}</div>
+                <div class="order-time">${new Date(order.timestamp).toLocaleString('pt-BR')}</div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar pedidos:', error);
+        const recentOrdersEl = document.getElementById('recentOrders');
+        if (recentOrdersEl) {
+            recentOrdersEl.innerHTML = '<p style="text-align: center; color: #f44336; padding: 1rem;">Erro ao carregar pedidos</p>';
+        }
     }
-    
-    recentOrdersEl.innerHTML = recentOrders.map(order => `
-        <div class="order-item">
-            <div class="order-id">Pedido #${order.id}</div>
-            <div class="order-customer">${order.customer ? order.customer.name : 'Cliente'}</div>
-            <div class="order-total">R$ ${order.total.toFixed(2).replace('.', ',')}</div>
-            <div class="order-time">${new Date(order.timestamp).toLocaleString('pt-BR')}</div>
-        </div>
-    `).join('');
 }
 
 // Sistema de notificações para o administrador
@@ -1501,10 +1511,6 @@ function initializeApp() {
         console.error('menuGrid não encontrado!');
     }
     
-    // Mostrar popup de promoção após 2 segundos
-    setTimeout(() => {
-        showPromoModal();
-    }, 2000);
     
     // Inicializar funcionalidades avançadas
     initializeAdvancedFeatures();
@@ -1835,64 +1841,7 @@ function scrollToMenu() {
     }
 }
 
-// Funções do Modal de Promoção
-function showPromoModal() {
-    // Verificar se o usuário já viu o popup hoje
-    const today = new Date().toDateString();
-    const lastSeen = localStorage.getItem('fry_promo_last_seen');
-    
-    if (lastSeen === today) {
-        return; // Não mostrar se já viu hoje
-    }
-    
-    const promoModal = document.getElementById('promoModal');
-    if (promoModal) {
-        promoModal.classList.add('show');
-        document.body.style.overflow = 'hidden';
-        
-        // Adicionar event listeners
-        setupPromoModalEvents();
-    }
-}
 
-function closePromoModal() {
-    const promoModal = document.getElementById('promoModal');
-    if (promoModal) {
-        promoModal.classList.remove('show');
-        document.body.style.overflow = 'auto';
-        
-        // Marcar como visto hoje
-        const today = new Date().toDateString();
-        localStorage.setItem('fry_promo_last_seen', today);
-    }
-}
-
-function setupPromoModalEvents() {
-    const promoModal = document.getElementById('promoModal');
-    const promoClose = document.getElementById('promoClose');
-    const promoOverlay = document.getElementById('promoOverlay');
-    
-    if (promoClose) {
-        promoClose.addEventListener('click', closePromoModal);
-    }
-    
-    if (promoOverlay) {
-        promoOverlay.addEventListener('click', closePromoModal);
-    }
-    
-    // Fechar com ESC
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && promoModal.classList.contains('show')) {
-            closePromoModal();
-        }
-    });
-}
-
-// Função para reabrir o modal (útil para testes)
-function reopenPromoModal() {
-    localStorage.removeItem('fry_promo_last_seen');
-    showPromoModal();
-}
 
 // Funcionalidades Avançadas
 function initializeAdvancedFeatures() {
