@@ -273,6 +273,7 @@ function initializeSync() {
 // Carregar dados do painel admin
 function loadMenuFromAdmin() {
     console.log('📋 Carregando dados do painel admin...');
+    console.log('🔍 DEBUG - localStorage fryMenuData:', localStorage.getItem('fryMenuData'));
     
     // Verificar dados de sincronização no localStorage
     const savedMenu = localStorage.getItem('fryMenuData');
@@ -378,6 +379,13 @@ function checkForUpdates() {
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 DOM Carregado - Iniciando aplicação...');
+    
+    // Limpar cache do localStorage para forçar recarregamento
+    localStorage.removeItem('fryMenuData');
+    localStorage.removeItem('frySyncData');
+    localStorage.removeItem('fryMenuUpdate');
+    
     initializeApp();
     initializeSync();
 });
