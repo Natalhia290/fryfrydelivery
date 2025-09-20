@@ -191,11 +191,57 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Funções globais para admin
 function showAdminPanel() {
+    // Verificar se está logado
+    const session = localStorage.getItem('fry_session');
+    if (!session) {
+        showLoginModal();
+        return;
+    }
+    
+    try {
+        const sessionData = JSON.parse(session);
+        const now = Date.now();
+        const sessionTimeout = 30 * 60 * 1000; // 30 minutos
+        
+        if (!sessionData.authenticated || (now - sessionData.timestamp) > sessionTimeout) {
+            localStorage.removeItem('fry_session');
+            showLoginModal();
+            return;
+        }
+    } catch (error) {
+        localStorage.removeItem('fry_session');
+        showLoginModal();
+        return;
+    }
+    
     alert('Redirecionando para painel admin...');
     window.open('painel-pedidos.html', '_blank');
 }
 
 function openPedidosPanel() {
+    // Verificar se está logado
+    const session = localStorage.getItem('fry_session');
+    if (!session) {
+        showLoginModal();
+        return;
+    }
+    
+    try {
+        const sessionData = JSON.parse(session);
+        const now = Date.now();
+        const sessionTimeout = 30 * 60 * 1000; // 30 minutos
+        
+        if (!sessionData.authenticated || (now - sessionData.timestamp) > sessionTimeout) {
+            localStorage.removeItem('fry_session');
+            showLoginModal();
+            return;
+        }
+    } catch (error) {
+        localStorage.removeItem('fry_session');
+        showLoginModal();
+        return;
+    }
+    
     alert('Redirecionando para painel de pedidos...');
     window.open('painel-pedidos.html', '_blank');
 }
@@ -212,8 +258,17 @@ function login(event) {
     const password = document.getElementById('passwordInput').value;
     
     if (cpf === '70389409103' && password === '999999') {
+        // Salvar sessão no localStorage
+        localStorage.setItem('fry_session', JSON.stringify({
+            authenticated: true,
+            timestamp: Date.now()
+        }));
+        
         alert('Login realizado com sucesso!');
-        window.location.href = 'admin.html';
+        hideLoginModal();
+        
+        // Redirecionar para painel admin
+        window.open('painel-pedidos.html', '_blank');
     } else {
         alert('CPF ou senha incorretos!');
     }
