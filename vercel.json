@@ -8,45 +8,16 @@
   ],
   "routes": [
     {
-      "src": "/",
-      "dest": "/index.html"
-    },
-    {
       "src": "/painel-pedidos.html",
       "dest": "/painel-pedidos.html"
     },
     {
-      "src": "/admin.html",
+      "src": "/admin.html", 
       "dest": "/admin.html"
     },
     {
       "src": "/(.*)",
       "dest": "/index.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        },
-        {
-          "key": "Pragma",
-          "value": "no-cache"
-        },
-        {
-          "key": "Expires",
-          "value": "0"
-        }
-      ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/painel-pedidos.html",
-      "destination": "/painel-pedidos.html"
     }
   ]
 }
