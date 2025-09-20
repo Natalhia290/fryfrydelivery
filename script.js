@@ -213,8 +213,8 @@ function getProductImage(product) {
     return imageMap[product.id] || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
 }
 
-// Dados dos produtos do cardápio FRY - VERCEL UPDATE FORÇADO
-const menuData = {
+// Dados dos produtos do cardápio FRY - SINCRONIZAÇÃO EM TEMPO REAL
+let menuData = {
     bigHots: [
         {
             id: 1,
@@ -389,9 +389,36 @@ const filterBtns = document.querySelectorAll('.filter-btn');
 const notification = document.getElementById('notification');
 const notificationText = document.getElementById('notificationText');
 
+// Sistema de sincronização em tempo real
+function initializeSync() {
+    // Escutar mudanças do painel admin
+    window.addEventListener('menuDataUpdated', function(event) {
+        console.log('🔄 Recebendo dados atualizados do painel admin');
+        menuData = event.detail.menuData;
+        renderMenu();
+        showNotification('Cardápio atualizado em tempo real!', 'success');
+    });
+    
+    // Verificar dados de sincronização no localStorage
+    const syncData = localStorage.getItem('frySyncData');
+    if (syncData) {
+        try {
+            const parsed = JSON.parse(syncData);
+            if (parsed.menuData) {
+                menuData = parsed.menuData;
+                console.log('📋 Dados sincronizados carregados do localStorage');
+                renderMenu();
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar dados sincronizados:', error);
+        }
+    }
+}
+
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
+    initializeSync();
 });
 
 // Event Listeners
