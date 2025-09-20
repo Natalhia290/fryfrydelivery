@@ -832,6 +832,7 @@
                 <h2 class="menu-management-title">🍣 Gerenciar Cardápio</h2>
                 <div class="header-actions">
                     <button class="sync-btn" onclick="forceSync()">🔄 Sincronizar</button>
+                    <button class="sync-btn" onclick="forceFirebaseUpdate()" style="background: #ff9800; margin-left: 10px;">🔥 Atualizar Firebase</button>
                     <button class="add-product-btn" onclick="showAddProductModal()">➕ Adicionar Produto</button>
                 </div>
             </div>
@@ -1909,6 +1910,9 @@
                 localStorage.setItem('fryMenuData', JSON.stringify(menuData));
                 console.log('💾 Cardápio salvo no localStorage');
                 
+                // Salvar no Firebase
+                await saveToFirebase();
+                
                 // Sincronizar com o site principal
                 await syncWithMainSite();
                 
@@ -1917,6 +1921,23 @@
             } catch (error) {
                 console.error('❌ Erro ao sincronizar:', error);
                 showNotification('Erro ao sincronizar, mas dados salvos localmente', 'error');
+            }
+        }
+
+        // Salvar dados no Firebase
+        async function saveToFirebase() {
+            try {
+                if (!db) {
+                    console.error('❌ Firebase não inicializado!');
+                    return;
+                }
+                
+                console.log('🔥 Salvando no Firebase...');
+                await db.collection('cardapio').doc('menu').set(menuData);
+                console.log('✅ Dados salvos no Firebase com sucesso!');
+            } catch (error) {
+                console.error('❌ Erro ao salvar no Firebase:', error);
+                throw error;
             }
         }
 
@@ -2044,6 +2065,22 @@
                 console.error('❌ Erro na sincronização forçada:', error);
                 showNotification('Erro na sincronização', 'error');
             });
+        }
+
+        // Forçar atualização do Firebase
+        async function forceFirebaseUpdate() {
+            try {
+                showNotification('Atualizando Firebase...', 'info');
+                
+                // Salvar no Firebase
+                await saveToFirebase();
+                
+                showNotification('Firebase atualizado com sucesso!', 'success');
+                console.log('🔥 Firebase atualizado com sucesso!');
+            } catch (error) {
+                console.error('❌ Erro ao atualizar Firebase:', error);
+                showNotification('Erro ao atualizar Firebase', 'error');
+            }
         }
 
         // Função de debug para verificar sincronização
