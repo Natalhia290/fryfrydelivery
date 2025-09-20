@@ -367,6 +367,7 @@ function checkForUpdates() {
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 DOM Carregado - Iniciando aplicação...');
+    alert('🚀 JavaScript carregado! Verificando dados...');
     
     // Limpar cache do localStorage para forçar recarregamento
     localStorage.removeItem('fryMenuData');
@@ -451,10 +452,12 @@ function checkAuthentication() {
 function renderMenu() {
     if (!menuGrid) {
         console.error('menuGrid não encontrado!');
+        alert('❌ menuGrid não encontrado!');
         return;
     }
     
     console.log('🎨 Renderizando menu com dados:', menuData);
+    alert('🎨 Renderizando menu com dados: ' + JSON.stringify(menuData));
     
     // Limpar grid
     menuGrid.innerHTML = '';
