@@ -1911,6 +1911,8 @@
                 emoji: document.getElementById('productEmoji').value || '🍣'
             };
 
+            console.log('📝 Salvando produto:', formData);
+
             if (editingProduct) {
                 // Editar produto existente
                 const category = findProductCategory(editingProduct.id);
@@ -1918,6 +1920,7 @@
                     const productIndex = menuData[category].findIndex(p => p.id === editingProduct.id);
                     if (productIndex !== -1) {
                         menuData[category][productIndex] = { ...editingProduct, ...formData };
+                        console.log('✏️ Produto editado:', menuData[category][productIndex]);
                         showNotification('Produto atualizado com sucesso!', 'success');
                     }
                 }
@@ -1928,12 +1931,19 @@
                     ...formData
                 };
                 menuData[formData.category].push(newProduct);
+                console.log('➕ Produto adicionado:', newProduct);
                 showNotification('Produto adicionado com sucesso!', 'success');
             }
 
-            saveMenuData();
-            renderMenuCategories();
-            closeProductModal();
+            // Salvar e sincronizar
+            saveMenuData().then(() => {
+                renderMenuCategories();
+                closeProductModal();
+                console.log('✅ Produto salvo e sincronizado');
+            }).catch((error) => {
+                console.error('❌ Erro ao salvar:', error);
+                showNotification('Erro ao salvar produto', 'error');
+            });
         });
 
         // Sincronização forçada
@@ -1957,6 +1967,30 @@
             console.log('🔍 DEBUG - localStorage frySyncData:', localStorage.getItem('frySyncData'));
             console.log('🔍 DEBUG - localStorage fryMenuUpdate:', localStorage.getItem('fryMenuUpdate'));
         }
+
+        // Função de teste para forçar atualização
+        function testSync() {
+            console.log('🧪 TESTE - Forçando sincronização...');
+            
+            // Alterar um produto para teste
+            if (menuData.bigHots && menuData.bigHots.length > 0) {
+                const testProduct = menuData.bigHots[0];
+                const originalPrice = testProduct.price;
+                testProduct.price = originalPrice + 0.01; // Adicionar 1 centavo
+                
+                console.log('🧪 TESTE - Preço alterado de', originalPrice, 'para', testProduct.price);
+                
+                // Salvar e sincronizar
+                saveMenuData().then(() => {
+                    console.log('🧪 TESTE - Sincronização concluída');
+                    showNotification('Teste de sincronização executado!', 'info');
+                });
+            }
+        }
+
+        // Tornar funções globais para debug
+        window.debugSync = debugSync;
+        window.testSync = testSync;
 
         // Fechar modal ao clicar fora
         window.addEventListener('click', function(e) {

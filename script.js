@@ -391,21 +391,26 @@ const notificationText = document.getElementById('notificationText');
 
 // Sistema de sincronização em tempo real
 function initializeSync() {
+    console.log('🔄 Inicializando sistema de sincronização...');
+    
     // Escutar mudanças do painel admin via eventos
     window.addEventListener('menuDataUpdated', function(event) {
-        console.log('🔄 Recebendo dados atualizados do painel admin');
-        menuData = event.detail.menuData;
-        renderMenu();
-        showNotification('Cardápio atualizado em tempo real!', 'success');
+        console.log('🔄 Evento menuDataUpdated recebido:', event.detail);
+        if (event.detail && event.detail.menuData) {
+            menuData = event.detail.menuData;
+            renderMenu();
+            showNotification('Cardápio atualizado em tempo real!', 'success');
+        }
     });
     
     // Escutar mudanças do localStorage (para outras abas)
     window.addEventListener('storage', function(event) {
+        console.log('🔄 Storage event recebido:', event.key, event.newValue);
         if (event.key === 'fryMenuUpdate') {
             try {
                 const updateData = JSON.parse(event.newValue);
                 if (updateData && updateData.menuData) {
-                    console.log('🔄 Recebendo dados atualizados via localStorage');
+                    console.log('🔄 Dados atualizados via localStorage:', updateData);
                     menuData = updateData.menuData;
                     renderMenu();
                     showNotification('Cardápio atualizado em tempo real!', 'success');
@@ -422,12 +427,33 @@ function initializeSync() {
         try {
             const parsed = JSON.parse(savedMenu);
             if (parsed) {
+                console.log('📋 Dados do localStorage carregados:', parsed);
                 menuData = parsed;
-                console.log('📋 Dados sincronizados carregados do localStorage');
                 renderMenu();
             }
         } catch (error) {
             console.error('❌ Erro ao carregar dados sincronizados:', error);
+        }
+    }
+    
+    // Verificar atualizações a cada 2 segundos
+    setInterval(checkForUpdates, 2000);
+}
+
+// Verificar atualizações periodicamente
+function checkForUpdates() {
+    const savedMenu = localStorage.getItem('fryMenuData');
+    if (savedMenu) {
+        try {
+            const parsed = JSON.parse(savedMenu);
+            if (parsed && JSON.stringify(parsed) !== JSON.stringify(menuData)) {
+                console.log('🔄 Atualização detectada via polling');
+                menuData = parsed;
+                renderMenu();
+                showNotification('Cardápio atualizado!', 'success');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao verificar atualizações:', error);
         }
     }
 }
