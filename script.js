@@ -279,7 +279,7 @@ function loadMenuFromAdmin() {
     if (savedMenu) {
         try {
             const parsed = JSON.parse(savedMenu);
-            if (parsed) {
+            if (parsed && Object.keys(parsed).length > 0) {
                 console.log('📋 Dados do localStorage carregados:', parsed);
                 menuData = parsed;
                 renderMenu();
@@ -290,17 +290,72 @@ function loadMenuFromAdmin() {
         }
     }
     
-    // Se não houver dados, usar dados padrão mínimos
-    console.log('📋 Usando dados padrão mínimos');
+    // Se não houver dados, usar dados padrão do painel admin
+    console.log('📋 Usando dados padrão do painel admin');
     menuData = {
-        bigHots: [],
-        miniSushiDog: [],
-        combos: [],
+        bigHots: [
+            {
+                id: 1,
+                name: "Big Hot de Tilápia",
+                description: "Crocante e gostoso! (De R$ 65,70 por R$ 49,90)",
+                price: 49.90,
+                emoji: "🍣",
+                category: "bigHots"
+            },
+            {
+                id: 2,
+                name: "Big Hot de Salmão",
+                description: "Crocante e gostoso! (De R$ 83,70 por R$ 59,90)",
+                price: 59.90,
+                emoji: "🍣",
+                category: "bigHots"
+            },
+            {
+                id: 3,
+                name: "Hot Filadélfia por 15 reais",
+                description: "O mais poderoso dos hots! Super recheado e irresistível.",
+                price: 15.00,
+                emoji: "🍣",
+                category: "bigHots"
+            }
+        ],
+        miniSushiDog: [
+            {
+                id: 4,
+                name: "Mini Sushi Dog Salmão",
+                description: "Mini hot dog de sushi recheado com salmão",
+                price: 27.90,
+                emoji: "🌭",
+                category: "miniSushiDog"
+            },
+            {
+                id: 5,
+                name: "Mini Sushi Dog Tilápia",
+                description: "Mini hot dog de sushi recheado com tilápia",
+                price: 21.90,
+                emoji: "🌭",
+                category: "miniSushiDog"
+            }
+        ],
+        combos: [
+            {
+                id: 6,
+                name: "Combo Família",
+                description: "2 Big Hots + 4 Mini Sushi Dogs + 2 Acompanhamentos",
+                price: 89.90,
+                emoji: "🍱",
+                category: "combos"
+            }
+        ],
         bebidas: [],
         adicionais: []
     };
     
-    showNotification('Cardápio vazio - Configure no painel admin', 'info');
+    // Salvar no localStorage para sincronização
+    localStorage.setItem('fryMenuData', JSON.stringify(menuData));
+    
+    renderMenu();
+    showNotification('Cardápio carregado - Configure no painel admin', 'info');
 }
 
 // Verificar atualizações periodicamente
