@@ -1,2 +1,2 @@
-FORÇAR ATUALIZAÇÃO VERCEL - 2025-01-20 15:12
-Este arquivo força o Vercel a fazer um novo deploy
+FORÇA ATUALIZAÇÃO VERCEL - 2025-01-20 15:50
+Este arquivo força o Vercel a detectar mudanças e fazer redeploy

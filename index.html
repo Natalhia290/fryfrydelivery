@@ -131,14 +131,24 @@
         </div>
     </section>
 
-    <!-- Seção Cardápio - CARREGADA VIA FIREBASE -->
+    <!-- Seção Cardápio -->
     <section id="cardapio" class="menu">
         <div class="container">
             <h2 class="section-title">Nosso Cardápio</h2>
             
-            <!-- Grid de Produtos - CARREGADO VIA JAVASCRIPT/FIREBASE -->
+            <!-- Filtros de Categoria -->
+            <div class="menu-filters">
+                <button class="filter-btn active" data-category="all">Todos</button>
+                <button class="filter-btn" data-category="bigHots">Big Hots & Promos</button>
+                <button class="filter-btn" data-category="miniSushiDog">Mini Sushi Dog</button>
+                <button class="filter-btn" data-category="combos">Combos</button>
+                <button class="filter-btn" data-category="bebidas">Bebidas</button>
+                <button class="filter-btn" data-category="adicionais">Adicionais</button>
+            </div>
+
+            <!-- Grid de Produtos -->
             <div class="menu-grid" id="menuGrid">
-                <!-- Os produtos serão inseridos via JavaScript do Firebase -->
+                <!-- Os produtos serão inseridos via JavaScript - ATUALIZADO 15:13 -->
             </div>
         </div>
     </section>
@@ -374,7 +384,7 @@
     <!-- JavaScript -->
     <script src="whatsapp-config.js"></script>
     <script src="force-admin-data.js"></script>
-    <script src="script.js?v=20250120154500"></script>
+    <script src="script.js?v=20250120155000"></script>
     
     <style>
         .no-image {

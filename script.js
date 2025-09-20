@@ -1,5 +1,5 @@
-// Script final - carregar dados do painel admin via Firebase
-console.log('🚀 Script carregado!');
+// Script final - carregar dados do painel admin via Firebase - VERCEL FORCE UPDATE 15:50
+console.log('🚀 Script carregado! - VERCEL FORCE UPDATE 15:50');
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -24,8 +24,8 @@ try {
     console.error('❌ Erro ao inicializar Firebase:', error);
 }
 
-        // Dados do cardápio - APENAS do Firebase
-        let menuData = {};
+// Dados do cardápio - carregados do Firebase
+let menuData = {};
 
 // Sistema de imagens personalizadas
 let productImages = {};

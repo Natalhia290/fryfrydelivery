@@ -4,11 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🍣 PAINEL ADMINISTRATIVO FRY - GERENCIAMENTO COMPLETO</title>
-    
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    
     <style>
         * {
             margin: 0;
@@ -1759,10 +1754,22 @@
         // Dados padrão do cardápio
         function getDefaultMenuData() {
             return {
-                bigHots: [],
-                miniSushiDog: [],
-                combos: [],
-                acompanhamentos: []
+                bigHots: [
+                    { id: 1, name: "Big Hot de Tilápia", description: "Crocante e gostoso! (De R$ 65,70 por R$ 49,90)", price: 49.90, emoji: "🍣", category: "bigHots" },
+                    { id: 2, name: "Big Hot de Salmão", description: "Crocante e gostoso! (De R$ 83,70 por R$ 59,90)", price: 59.90, emoji: "🍣", category: "bigHots" },
+                    { id: 3, name: "Hot Filadélfia por 15 reais", description: "O mais poderoso dos hots! Super recheado e irresistível.", price: 15.00, emoji: "🍣", category: "bigHots" }
+                ],
+                miniSushiDog: [
+                    { id: 4, name: "Mini Sushi Dog Salmão", description: "Mini hot dog de sushi recheado com salmão", price: 27.90, emoji: "🌭", category: "miniSushiDog" },
+                    { id: 5, name: "Mini Sushi Dog Tilápia", description: "Mini hot dog de sushi recheado com tilápia", price: 21.90, emoji: "🌭", category: "miniSushiDog" }
+                ],
+                combos: [
+                    { id: 6, name: "Combo Família", description: "2 Big Hots + 4 Mini Sushi Dogs + 2 Acompanhamentos", price: 89.90, emoji: "🍱", category: "combos" }
+                ],
+                acompanhamentos: [
+                    { id: 7, name: "Batata Frita", description: "Porção de batata frita crocante", price: 12.90, emoji: "🍟", category: "acompanhamentos" },
+                    { id: 8, name: "Onion Rings", description: "Anéis de cebola empanados", price: 15.90, emoji: "🧅", category: "acompanhamentos" }
+                ]
             };
         }
 
@@ -1901,49 +1908,15 @@
                 // Salvar no localStorage
                 localStorage.setItem('fryMenuData', JSON.stringify(menuData));
                 console.log('💾 Cardápio salvo no localStorage');
-
-                // Salvar no Firebase
-                await saveToFirebase();
-
+                
                 // Sincronizar com o site principal
                 await syncWithMainSite();
-
+                
                 // Mostrar notificação de sincronização
                 showNotification('Cardápio sincronizado em tempo real!', 'success');
             } catch (error) {
                 console.error('❌ Erro ao sincronizar:', error);
                 showNotification('Erro ao sincronizar, mas dados salvos localmente', 'error');
-            }
-        }
-
-        // Salvar no Firebase
-        async function saveToFirebase() {
-            try {
-                // Configuração do Firebase
-                const firebaseConfig = {
-                    apiKey: "AIzaSyC9UzFuG_0wYjsXkNDf776RCY8X3TpcI1Q",
-                    authDomain: "fryfrydelivery.firebaseapp.com",
-                    projectId: "fryfrydelivery",
-                    storageBucket: "fryfrydelivery.firebasestorage.app",
-                    messagingSenderId: "567260128188",
-                    appId: "1:567260128188:web:aac55f5a4b8944622641b9",
-                    measurementId: "G-SE7XWRPSRZ"
-                };
-
-                // Inicializar Firebase se não estiver inicializado
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(firebaseConfig);
-                }
-                
-                const db = firebase.firestore();
-                
-                // Salvar no Firebase
-                await db.collection('cardapio').doc('menu').set(menuData);
-                console.log('🔥 Dados salvos no Firebase!');
-                
-            } catch (error) {
-                console.error('❌ Erro ao salvar no Firebase:', error);
-                throw error;
             }
         }
 
