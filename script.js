@@ -275,24 +275,8 @@ function loadMenuFromAdmin() {
     console.log('📋 Carregando dados do painel admin...');
     console.log('🔍 DEBUG - localStorage fryMenuData:', localStorage.getItem('fryMenuData'));
     
-    // Verificar dados de sincronização no localStorage
-    const savedMenu = localStorage.getItem('fryMenuData');
-    if (savedMenu) {
-        try {
-            const parsed = JSON.parse(savedMenu);
-            if (parsed && Object.keys(parsed).length > 0) {
-                console.log('📋 Dados do localStorage carregados:', parsed);
-                menuData = parsed;
-                renderMenu();
-                return;
-            }
-        } catch (error) {
-            console.error('❌ Erro ao carregar dados sincronizados:', error);
-        }
-    }
-    
-    // Se não houver dados, usar dados padrão do painel admin
-    console.log('📋 Usando dados padrão do painel admin');
+    // SEMPRE usar dados padrão corretos primeiro
+    console.log('📋 Usando dados padrão corretos do painel admin');
     menuData = {
         bigHots: [
             {
@@ -355,8 +339,11 @@ function loadMenuFromAdmin() {
     // Salvar no localStorage para sincronização
     localStorage.setItem('fryMenuData', JSON.stringify(menuData));
     
+    // Renderizar imediatamente
     renderMenu();
-    showNotification('Cardápio carregado - Configure no painel admin', 'info');
+    showNotification('Cardápio atualizado com dados corretos!', 'success');
+    
+    console.log('✅ MenuData carregado:', menuData);
 }
 
 // Verificar atualizações periodicamente
