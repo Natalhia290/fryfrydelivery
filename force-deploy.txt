@@ -1,0 +1,4 @@
+VERCEL FORCE DEPLOY - $(Get-Date)
+Correção do roteamento do painel-pedidos.html
+Headers de cache desabilitados
+Rewrites adicionados
