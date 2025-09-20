@@ -70,4 +70,42 @@ window.dispatchEvent(new CustomEvent('menuDataUpdated', {
     detail: { menuData: adminData }
 }));
 
+// Forçar renderização imediata
+setTimeout(() => {
+    const menuGrid = document.getElementById('menuGrid');
+    if (menuGrid) {
+        menuGrid.innerHTML = '';
+        
+        // Renderizar produtos
+        const categories = ['bigHots', 'miniSushiDog', 'combos', 'bebidas', 'adicionais'];
+        
+        categories.forEach(category => {
+            if (adminData[category] && adminData[category].length > 0) {
+                adminData[category].forEach(product => {
+                    const productCard = document.createElement('div');
+                    productCard.className = 'menu-item';
+                    productCard.innerHTML = `
+                        <div class="menu-item-image">
+                            <div class="no-image">SEM IMAGEM</div>
+                        </div>
+                        <div class="menu-item-content">
+                            <h3 class="menu-item-name">${product.emoji} ${product.name}</h3>
+                            <p class="menu-item-description">${product.description}</p>
+                            <div class="menu-item-footer">
+                                <span class="menu-item-price">R$ ${product.price.toFixed(2).replace('.', ',')}</span>
+                                <button class="add-to-cart-btn" onclick="addToCart(${product.id})">
+                                    Adicionar +
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    menuGrid.appendChild(productCard);
+                });
+            }
+        });
+        
+        console.log('🎨 Menu renderizado forçadamente!');
+    }
+}, 1000);
+
 console.log('🚀 Dados forçados e evento disparado!');

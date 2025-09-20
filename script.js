@@ -1,7 +1,30 @@
-// Script final - carregar dados do painel admin
+// Script final - carregar dados do painel admin via Firebase
 console.log('🚀 Script carregado!');
 
-// Dados do cardápio - carregados do painel admin
+// Configuração do Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyC9UzFuG_0wYjsXkNDf776RCY8X3TpcI1Q",
+    authDomain: "fryfrydelivery.firebaseapp.com",
+    projectId: "fryfrydelivery",
+    storageBucket: "fryfrydelivery.firebasestorage.app",
+    messagingSenderId: "567260128188",
+    appId: "1:567260128188:web:aac55f5a4b8944622641b9",
+    measurementId: "G-SE7XWRPSRZ"
+};
+
+// Inicializar Firebase
+let db = null;
+try {
+    if (typeof firebase !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        console.log('✅ Firebase inicializado!');
+    }
+} catch (error) {
+    console.error('❌ Erro ao inicializar Firebase:', error);
+}
+
+// Dados do cardápio - carregados do Firebase
 let menuData = {};
 
 // Sistema de imagens personalizadas
@@ -10,39 +33,32 @@ let productImages = {};
 // Elementos DOM
 const menuGrid = document.getElementById('menuGrid');
 
-// Função para carregar dados do painel admin
-function loadMenuData() {
-    console.log('📋 Carregando dados do painel admin...');
+// Função para carregar dados do painel admin via Firebase
+async function loadMenuData() {
+    console.log('📋 Carregando dados do painel admin via Firebase...');
     
-    // SEMPRE verificar dados do painel admin primeiro
-    const savedData = localStorage.getItem('fryMenuData');
-    
-    if (savedData) {
-        try {
-            const parsedData = JSON.parse(savedData);
-            if (parsedData && Object.keys(parsedData).length > 0) {
-                menuData = parsedData;
-                console.log('✅ Dados carregados do painel admin:', menuData);
-                renderMenu();
-                return;
-            }
-        } catch (error) {
-            console.error('❌ Erro ao carregar dados:', error);
-        }
+    if (!db) {
+        console.error('❌ Firebase não inicializado!');
+        showEmptyMenuMessage();
+        return;
     }
     
-    // Se não houver dados do painel admin, mostrar mensagem
-    console.log('📋 Nenhum dado do painel admin encontrado');
-    menuData = {
-        bigHots: [],
-        miniSushiDog: [],
-        combos: [],
-        bebidas: [],
-        adicionais: []
-    };
-    
-    renderMenu();
-    showEmptyMenuMessage();
+    try {
+        // Carregar dados do Firebase
+        const doc = await db.collection('cardapio').doc('menu').get();
+        
+        if (doc.exists) {
+            menuData = doc.data();
+            console.log('✅ Dados carregados do Firebase:', menuData);
+            renderMenu();
+        } else {
+            console.log('📋 Nenhum dado encontrado no Firebase');
+            showEmptyMenuMessage();
+        }
+    } catch (error) {
+        console.error('❌ Erro ao carregar dados do Firebase:', error);
+        showEmptyMenuMessage();
+    }
 }
 
 // Mostrar mensagem de cardápio vazio
@@ -159,45 +175,48 @@ function addToCart(productId) {
     alert('Produto adicionado ao carrinho! ID: ' + productId);
 }
 
-// Escutar mudanças do painel admin
+// Escutar mudanças do painel admin via Firebase
 function setupSync() {
-    // Escutar mudanças no localStorage
-    window.addEventListener('storage', function(event) {
-        if (event.key === 'fryMenuData') {
-            console.log('🔄 Dados atualizados via localStorage');
-            loadMenuData();
+    if (!db) {
+        console.error('❌ Firebase não inicializado para sincronização!');
+        return;
+    }
+    
+    // Escutar mudanças em tempo real no Firebase
+    db.collection('cardapio').doc('menu').onSnapshot((doc) => {
+        if (doc.exists) {
+            console.log('🔄 Dados atualizados via Firebase:', doc.data());
+            menuData = doc.data();
+            renderMenu();
         }
+    }, (error) => {
+        console.error('❌ Erro ao escutar mudanças do Firebase:', error);
     });
     
-    // Verificar atualizações a cada 3 segundos
-    setInterval(() => {
-        const savedData = localStorage.getItem('fryMenuData');
-        if (savedData) {
-            try {
-                const newData = JSON.parse(savedData);
+    // Verificar atualizações a cada 5 segundos como fallback
+    setInterval(async () => {
+        try {
+            const doc = await db.collection('cardapio').doc('menu').get();
+            if (doc.exists) {
+                const newData = doc.data();
                 if (JSON.stringify(newData) !== JSON.stringify(menuData)) {
                     console.log('🔄 Atualização detectada via polling');
                     menuData = newData;
                     renderMenu();
                 }
-            } catch (error) {
-                console.error('❌ Erro ao verificar atualizações:', error);
             }
+        } catch (error) {
+            console.error('❌ Erro ao verificar atualizações:', error);
         }
-    }, 3000);
+    }, 5000);
 }
 
 // Inicialização
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 DOM carregado - Iniciando...');
     
-    // LIMPAR TUDO E FORÇAR DADOS DO PAINEL ADMIN
-    localStorage.removeItem('fryMenuData');
-    localStorage.removeItem('frySyncData');
-    localStorage.removeItem('fryMenuUpdate');
-    
-    // Carregar dados
-    loadMenuData();
+    // Carregar dados do Firebase
+    await loadMenuData();
     
     // Configurar sincronização
     setupSync();
