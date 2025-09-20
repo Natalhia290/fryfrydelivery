@@ -72,6 +72,42 @@ function testAdminRedirect() {
     window.location.href = 'admin.html';
 }
 
+// Função para abrir painel de pedidos
+function openPedidosPanel() {
+    console.log('Abrindo painel de pedidos...');
+    
+    // Verificar se está autenticado
+    const session = localStorage.getItem('fry_session');
+    if (!session) {
+        alert('⚠️ Acesso Restrito!\n\nVocê precisa fazer login para acessar o painel de pedidos.\n\nClique em "Entrar" no canto superior direito para fazer login.');
+        return;
+    }
+    
+    try {
+        const sessionData = JSON.parse(session);
+        const now = Date.now();
+        const sessionTimeout = 30 * 60 * 1000; // 30 minutos
+        
+        if (!sessionData.authenticated || (now - sessionData.timestamp) > sessionTimeout) {
+            localStorage.removeItem('fry_session');
+            alert('⚠️ Sessão Expirada!\n\nSua sessão expirou. Faça login novamente para acessar o painel de pedidos.');
+            return;
+        }
+    } catch (error) {
+        localStorage.removeItem('fry_session');
+        alert('⚠️ Erro de Sessão!\n\nFaça login novamente para acessar o painel de pedidos.');
+        return;
+    }
+    
+    window.open('painel-pedidos.html', '_blank');
+}
+
+// Função para abrir acompanhar pedido
+function openAcompanharPedido() {
+    console.log('Abrindo acompanhar pedido...');
+    window.open('acompanhar-pedido.html', '_blank');
+}
+
 function login(event) {
     event.preventDefault();
     
@@ -177,12 +213,12 @@ function getProductImage(product) {
     return imageMap[product.id] || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
 }
 
-// Dados dos produtos do cardápio FRY
-const menuData = {
+// Dados dos produtos do cardápio FRY - SINCRONIZAÇÃO EM TEMPO REAL
+let menuData = {
     bigHots: [
         {
             id: 1,
-            name: "Big Hot de Tilápia + 2 Minis",
+            name: "Big Hot de Tilápia",
             description: "Crocante e gostoso! (De R$ 65,70 por R$ 49,90)",
             price: 49.90,
             emoji: "🍣",
@@ -190,7 +226,7 @@ const menuData = {
         },
         {
             id: 2,
-            name: "Big Hot de Salmão + 2 Minis",
+            name: "Big Hot de Salmão",
             description: "Crocante e gostoso! (De R$ 83,70 por R$ 59,90)",
             price: 59.90,
             emoji: "🍣",
@@ -198,9 +234,9 @@ const menuData = {
         },
         {
             id: 3,
-            name: "40 Hots Filadélfia",
-            description: "40 irresistíveis e deliciosos hots. (De R$ 80,00 por R$ 40,00)",
-            price: 40.00,
+            name: "Hot Filadélfia por 15 reais",
+            description: "O mais poderoso dos hots! Super recheado e irresistível.",
+            price: 15.00,
             emoji: "🍣",
             category: "bigHots"
         }
@@ -353,9 +389,79 @@ const filterBtns = document.querySelectorAll('.filter-btn');
 const notification = document.getElementById('notification');
 const notificationText = document.getElementById('notificationText');
 
+// Sistema de sincronização em tempo real
+function initializeSync() {
+    console.log('🔄 Inicializando sistema de sincronização...');
+    
+    // Escutar mudanças do painel admin via eventos
+    window.addEventListener('menuDataUpdated', function(event) {
+        console.log('🔄 Evento menuDataUpdated recebido:', event.detail);
+        if (event.detail && event.detail.menuData) {
+            menuData = event.detail.menuData;
+            renderMenu();
+            showNotification('Cardápio atualizado em tempo real!', 'success');
+        }
+    });
+    
+    // Escutar mudanças do localStorage (para outras abas)
+    window.addEventListener('storage', function(event) {
+        console.log('🔄 Storage event recebido:', event.key, event.newValue);
+        if (event.key === 'fryMenuUpdate') {
+            try {
+                const updateData = JSON.parse(event.newValue);
+                if (updateData && updateData.menuData) {
+                    console.log('🔄 Dados atualizados via localStorage:', updateData);
+                    menuData = updateData.menuData;
+                    renderMenu();
+                    showNotification('Cardápio atualizado em tempo real!', 'success');
+                }
+            } catch (error) {
+                console.error('❌ Erro ao processar dados do localStorage:', error);
+            }
+        }
+    });
+    
+    // Verificar dados de sincronização no localStorage
+    const savedMenu = localStorage.getItem('fryMenuData');
+    if (savedMenu) {
+        try {
+            const parsed = JSON.parse(savedMenu);
+            if (parsed) {
+                console.log('📋 Dados do localStorage carregados:', parsed);
+                menuData = parsed;
+                renderMenu();
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar dados sincronizados:', error);
+        }
+    }
+    
+    // Verificar atualizações a cada 2 segundos
+    setInterval(checkForUpdates, 2000);
+}
+
+// Verificar atualizações periodicamente
+function checkForUpdates() {
+    const savedMenu = localStorage.getItem('fryMenuData');
+    if (savedMenu) {
+        try {
+            const parsed = JSON.parse(savedMenu);
+            if (parsed && JSON.stringify(parsed) !== JSON.stringify(menuData)) {
+                console.log('🔄 Atualização detectada via polling');
+                menuData = parsed;
+                renderMenu();
+                showNotification('Cardápio atualizado!', 'success');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao verificar atualizações:', error);
+        }
+    }
+}
+
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
+    initializeSync();
 });
 
 // Event Listeners
@@ -451,6 +557,9 @@ function renderMenu() {
 function createProductElement(product, index) {
     const div = document.createElement('div');
     div.className = 'menu-item';
+    if (product.outOfStock) {
+        div.classList.add('out-of-stock');
+    }
     div.style.animationDelay = `${index * 0.1}s`;
     div.style.opacity = '0';
     div.style.transform = 'translateY(30px)';
@@ -459,25 +568,52 @@ function createProductElement(product, index) {
     // Definir imagem baseada na categoria e nome do produto
     const imageUrl = getProductImage(product);
     
-    div.innerHTML = `
-        <div class="menu-item-image">
-            <img src="${imageUrl}" alt="${product.name}" loading="lazy">
-            <div class="image-overlay">
-                ${product.emoji}
+    // HTML para item esgotado
+    if (product.outOfStock) {
+        div.innerHTML = `
+            <div class="menu-item-image">
+                <img src="${imageUrl}" alt="${product.name}" loading="lazy">
+                <div class="image-overlay">
+                    ${product.emoji}
+                </div>
+                <div class="out-of-stock-ribbon">
+                    <span>ITEM ESGOTADO</span>
+                </div>
             </div>
-        </div>
-        <div class="menu-item-content">
-            <h3 class="menu-item-name">${product.name}</h3>
-            <p class="menu-item-description">${product.description}</p>
-            <div class="menu-item-footer">
-                <span class="menu-item-price">R$ ${product.price.toFixed(2).replace('.', ',')}</span>
-                <button class="add-to-cart-btn" onclick="addToCart(${product.id})">
-                    <span class="btn-text">Adicionar</span>
-                    <span class="btn-icon">+</span>
-                </button>
+            <div class="menu-item-content">
+                <h3 class="menu-item-name">${product.name}</h3>
+                <p class="menu-item-description">${product.description}</p>
+                <div class="menu-item-footer">
+                    <span class="menu-item-price">R$ ${product.price.toFixed(2).replace('.', ',')}</span>
+                    <button class="add-to-cart-btn disabled" disabled>
+                        <span class="btn-text">Esgotado</span>
+                        <span class="btn-icon">❌</span>
+                    </button>
+                </div>
             </div>
-        </div>
-    `;
+        `;
+    } else {
+        // HTML normal para itens disponíveis
+        div.innerHTML = `
+            <div class="menu-item-image">
+                <img src="${imageUrl}" alt="${product.name}" loading="lazy">
+                <div class="image-overlay">
+                    ${product.emoji}
+                </div>
+            </div>
+            <div class="menu-item-content">
+                <h3 class="menu-item-name">${product.name}</h3>
+                <p class="menu-item-description">${product.description}</p>
+                <div class="menu-item-footer">
+                    <span class="menu-item-price">R$ ${product.price.toFixed(2).replace('.', ',')}</span>
+                    <button class="add-to-cart-btn" onclick="addToCart(${product.id})">
+                        <span class="btn-text">Adicionar</span>
+                        <span class="btn-icon">+</span>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
     
     // Adicionar efeito de hover dinâmico
     div.addEventListener('mouseenter', () => {
@@ -587,16 +723,10 @@ function updateCheckoutButton() {
     const checkoutBtn = document.getElementById('checkoutBtn');
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    if (total < 50) {
-        const remaining = (50 - total).toFixed(2).replace('.', ',');
-        checkoutBtn.innerHTML = `Adicione R$ ${remaining} para finalizar`;
-        checkoutBtn.style.background = '#ffc107';
-        checkoutBtn.disabled = true;
-    } else {
-        checkoutBtn.innerHTML = 'Enviar Pedido no WhatsApp';
-        checkoutBtn.style.background = '';
-        checkoutBtn.disabled = false;
-    }
+    // Removido pedido mínimo - sempre habilitado
+    checkoutBtn.innerHTML = 'Enviar Pedido no WhatsApp';
+    checkoutBtn.style.background = '';
+    checkoutBtn.disabled = false;
 }
 
 function updateCartCount() {
@@ -703,28 +833,19 @@ function checkout() {
         return;
     }
 
-    const checkoutForm = document.getElementById('checkoutForm');
-    const checkoutBtn = document.getElementById('checkoutBtn');
-    
-    // Se formulário não está visível, mostrar
-    if (checkoutForm.style.display === 'none') {
-        checkoutForm.style.display = 'block';
-        checkoutBtn.innerHTML = 'Enviar Pedido no WhatsApp';
-        checkoutBtn.onclick = processCheckout;
-        return;
-    }
-    
-    // Processar checkout
+    // Processar checkout diretamente
     processCheckout();
 }
 
 async function processCheckout() {
     const customerPhone = document.getElementById('customerPhone').value;
     const customerName = document.getElementById('customerName').value;
+    const customerAddress = document.getElementById('customerAddress').value;
+    const customerSector = document.getElementById('customerSector').value;
     const checkoutBtn = document.getElementById('checkoutBtn');
     
     // Validar campos
-    if (!customerPhone || !customerName) {
+    if (!customerPhone || !customerName || !customerAddress || !customerSector) {
         showNotification('Por favor, preencha todos os campos!', 'error');
         return;
     }
@@ -736,12 +857,7 @@ async function processCheckout() {
         return;
     }
     
-    // Validar pedido mínimo de R$ 50
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    if (total < 50) {
-        showNotification(`Pedido mínimo de R$ 50,00. Seu pedido atual: R$ ${total.toFixed(2).replace('.', ',')}`, 'error');
-        return;
-    }
+    // Pedido mínimo removido - qualquer valor é aceito
     
     // Animação do botão
     checkoutBtn.style.transform = 'scale(0.95)';
@@ -777,7 +893,8 @@ async function processCheckout() {
     // Resetar formulário
     document.getElementById('customerPhone').value = '';
     document.getElementById('customerName').value = '';
-    document.getElementById('checkoutForm').style.display = 'none';
+    document.getElementById('customerAddress').value = '';
+    document.getElementById('customerSector').value = '';
     
     // Resetar botão
     checkoutBtn.style.transform = 'scale(1)';
@@ -902,7 +1019,9 @@ function sendWhatsAppMessage(customerPhone, message) {
         // Criar mensagem com dados do cliente
         const customerMessage = `Olá! Quero fazer um pedido!\n\n` +
                               `👤 *Meu nome:* ${document.getElementById('customerName').value}\n` +
-                              `📱 *Meu WhatsApp:* ${customerPhone}\n\n` +
+                              `📱 *Meu WhatsApp:* ${customerPhone}\n` +
+                              `🏠 *Endereço:* ${document.getElementById('customerAddress').value}\n` +
+                              `📍 *Setor:* ${document.getElementById('customerSector').value}\n\n` +
                               `📋 *MEU PEDIDO:*\n${message}`;
         
         // Criar URL do WhatsApp da loja
@@ -926,39 +1045,29 @@ function sendWhatsAppMessage(customerPhone, message) {
     }
 }
 
-// Gerar mensagem de pedido do cliente para a loja
+// Gerar mensagem de pedido do cliente para a loja (SIMPLIFICADA)
 function generateCustomerOrderMessage(customerName) {
     const now = new Date();
     const orderId = generateOrderId();
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const customerAddress = document.getElementById('customerAddress').value;
+    const customerSector = document.getElementById('customerSector').value;
     
-    let message = '🍣 *PEDIDO FRY - Sushi Delivery* 🍣\n\n';
-    message += `📋 *PEDIDO #${orderId}*\n`;
-    message += `🕐 ${now.toLocaleString('pt-BR')}\n\n`;
+    let message = `🍣 *NOVO PEDIDO FRY* #${orderId}\n\n`;
     
-    message += '🍱 *ITENS DO PEDIDO:*\n';
+    message += `👤 *Cliente:* ${customerName}\n`;
+    message += `📱 *WhatsApp:* ${document.getElementById('customerPhone').value}\n`;
+    message += `🏠 *Endereço:* ${customerAddress}\n`;
+    message += `📍 *Setor:* ${customerSector}\n\n`;
+    
+    message += `🍱 *PEDIDO:*\n`;
     cart.forEach((item, index) => {
-        message += `${index + 1}. ${item.name}\n`;
-        message += `   Quantidade: ${item.quantity}x\n`;
-        message += `   Preço unitário: R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
-        message += `   Subtotal: R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}\n\n`;
+        message += `${index + 1}. ${item.name} - ${item.quantity}x = R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}\n`;
     });
     
-    message += `💰 *VALOR TOTAL: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
-    
-    message += '📝 *INFORMAÇÕES ADICIONAIS:*\n';
-    message += '• 🏠 Endereço de entrega: [INFORME AQUI]\n';
-    message += '• 📍 Ponto de referência: [OPCIONAL]\n';
-    message += '• 💰 Forma de pagamento: [PIX/DINHEIRO/CARTÃO]\n';
-    message += '• 📝 Observações: [SE HOUVER]\n\n';
-    
-    message += '🚚 *INFORMAÇÕES DE ENTREGA:*\n';
-    message += '• ⏱️ Tempo estimado: 30-45 minutos\n';
-    message += '• 💰 Taxa de entrega: Calculada no WhatsApp\n';
-    message += '• 🆓 Entregas a partir de R$ 100,00: Grátis\n';
-    message += '• 📍 Área de entrega: Goiânia e Região Metropolitana\n\n';
-    
-    message += 'Obrigado! 🙏';
+    message += `\n💰 *TOTAL: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
+    message += `🕐 ${now.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit' })}\n`;
+    message += `📱 Entrega calculada no WhatsApp`;
     
     return message;
 }
@@ -982,8 +1091,11 @@ function generateOrderId() {
     return orderId;
 }
 
-// Salvar pedido no Firebase e localStorage
+// Salvar pedido no Firebase e localStorage (MELHORADO)
 async function saveOrderToFirebase(customerName, customerPhone) {
+    const customerAddress = document.getElementById('customerAddress').value;
+    const customerSector = document.getElementById('customerSector').value;
+    
     const order = {
         id: generateOrderId(),
         timestamp: new Date().toISOString(),
@@ -992,57 +1104,44 @@ async function saveOrderToFirebase(customerName, customerPhone) {
         status: 'pendente',
         cliente: customerName,
         telefone: customerPhone,
+        endereco: customerAddress,
+        setor: customerSector,
         notes: '',
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        // Adicionar timestamp único para evitar duplicatas
+        uniqueId: Date.now() + Math.random()
     };
     
-    // Salvar no Firebase PRIMEIRO (fonte principal)
+    // SEMPRE salvar no localStorage PRIMEIRO (mais confiável)
+    try {
+        const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
+        
+        // Verificar se já existe um pedido com o mesmo ID
+        const existingOrder = orders.find(o => o.id === order.id);
+        if (existingOrder) {
+            console.log('⚠️ Pedido já existe, atualizando...');
+            const index = orders.findIndex(o => o.id === order.id);
+            orders[index] = order;
+        } else {
+            orders.unshift(order);
+        }
+        
+        localStorage.setItem('fryOrders', JSON.stringify(orders));
+        console.log('✅ Pedido salvo no localStorage:', order.id);
+        
+    } catch (error) {
+        console.error('❌ Erro ao salvar no localStorage:', error);
+    }
+    
+    // Depois tentar salvar no Firebase (opcional)
     if (firebaseInitialized && db) {
         try {
-            // Usar Firebase v8 (compat) para consistência
             const docRef = await db.collection('orders').add(order);
-            console.log('✅ Pedido salvo no Firebase com ID:', docRef.id);
-            console.log('📊 Dados do pedido:', order);
-            
-            // Salvar no localStorage apenas como backup
-            const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
-            orders.unshift(order);
-            localStorage.setItem('fryOrders', JSON.stringify(orders));
-            console.log('💾 Backup salvo no localStorage');
-            
+            console.log('✅ Pedido também salvo no Firebase:', docRef.id);
         } catch (error) {
-            console.error('❌ Erro ao salvar no Firebase:', error);
-            console.log('🔄 Tentando novamente em 2 segundos...');
-            
-            // Tentar novamente após 2 segundos
-            setTimeout(async () => {
-                try {
-                    await db.collection('orders').add(order);
-                    console.log('✅ Pedido salvo no Firebase na segunda tentativa');
-                    
-                    // Salvar no localStorage como backup
-                    const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
-                    orders.unshift(order);
-                    localStorage.setItem('fryOrders', JSON.stringify(orders));
-                    
-                } catch (retryError) {
-                    console.error('❌ Erro na segunda tentativa:', retryError);
-                    console.log('⚠️ Salvando apenas no localStorage como fallback');
-                    
-                    // Fallback para localStorage
-                    const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
-                    orders.unshift(order);
-                    localStorage.setItem('fryOrders', JSON.stringify(orders));
-                }
-            }, 2000);
+            console.error('❌ Erro ao salvar no Firebase (não crítico):', error);
+            // Não falhar se Firebase der erro, localStorage já salvou
         }
-    } else {
-        console.log('⚠️ Firebase não inicializado, salvando apenas no localStorage');
-        
-        // Fallback para localStorage
-        const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
-        orders.unshift(order);
-        localStorage.setItem('fryOrders', JSON.stringify(orders));
     }
     
     // Notificar administrador
@@ -1209,52 +1308,105 @@ function initializeAdminPanel() {
 }
 
 function updateAdminStats() {
-    const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
-    const today = new Date().toDateString();
-    
-    // Filtrar pedidos de hoje
-    const todayOrders = orders.filter(order => {
-        const orderDate = new Date(order.timestamp).toDateString();
-        return orderDate === today;
-    });
-    
-    // Calcular estatísticas
-    const totalOrders = todayOrders.length;
-    const totalRevenue = todayOrders.reduce((sum, order) => sum + order.total, 0);
-    
-    // Atualizar interface
-    const totalOrdersEl = document.getElementById('totalOrders');
-    const totalRevenueEl = document.getElementById('totalRevenue');
-    
-    if (totalOrdersEl) totalOrdersEl.textContent = totalOrders;
-    if (totalRevenueEl) totalRevenueEl.textContent = `R$ ${totalRevenue.toFixed(2).replace('.', ',')}`;
+    try {
+        const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
+        const today = new Date().toDateString();
+        
+        console.log('📊 Atualizando estatísticas. Total de pedidos:', orders.length);
+        
+        // Filtrar pedidos válidos de hoje
+        const todayOrders = orders.filter(order => {
+            if (!order || !order.timestamp || order.total === undefined) {
+                return false;
+            }
+            const orderDate = new Date(order.timestamp).toDateString();
+            return orderDate === today;
+        });
+        
+        console.log('📅 Pedidos de hoje:', todayOrders.length);
+        
+        // Calcular estatísticas
+        const totalOrders = todayOrders.length;
+        const totalRevenue = todayOrders.reduce((sum, order) => {
+            const total = parseFloat(order.total) || 0;
+            return sum + total;
+        }, 0);
+        
+        // Atualizar interface
+        const totalOrdersEl = document.getElementById('totalOrders');
+        const totalRevenueEl = document.getElementById('totalRevenue');
+        
+        if (totalOrdersEl) {
+            totalOrdersEl.textContent = totalOrders;
+            console.log('✅ Total de pedidos atualizado:', totalOrders);
+        }
+        
+        if (totalRevenueEl) {
+            totalRevenueEl.textContent = `R$ ${totalRevenue.toFixed(2).replace('.', ',')}`;
+            console.log('✅ Faturamento atualizado:', totalRevenue);
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro ao atualizar estatísticas:', error);
+        
+        // Fallback em caso de erro
+        const totalOrdersEl = document.getElementById('totalOrders');
+        const totalRevenueEl = document.getElementById('totalRevenue');
+        
+        if (totalOrdersEl) totalOrdersEl.textContent = '0';
+        if (totalRevenueEl) totalRevenueEl.textContent = 'R$ 0,00';
+    }
 }
 
 function loadRecentOrders() {
-    const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
-    const recentOrdersEl = document.getElementById('recentOrders');
-    
-    if (!recentOrdersEl) return;
-    
-    // Ordenar por timestamp (mais recentes primeiro)
-    const sortedOrders = orders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    
-    // Mostrar apenas os 5 mais recentes
-    const recentOrders = sortedOrders.slice(0, 5);
-    
-    if (recentOrders.length === 0) {
-        recentOrdersEl.innerHTML = '<p style="text-align: center; color: #666; padding: 1rem;">Nenhum pedido ainda</p>';
-        return;
+    try {
+        const orders = JSON.parse(localStorage.getItem('fryOrders') || '[]');
+        const recentOrdersEl = document.getElementById('recentOrders');
+        
+        if (!recentOrdersEl) return;
+        
+        console.log('📊 Carregando pedidos:', orders.length);
+        
+        // Filtrar pedidos válidos e ordenar por timestamp
+        const validOrders = orders.filter(order => 
+            order && 
+            order.id && 
+            order.timestamp && 
+            order.total !== undefined
+        );
+        
+        const sortedOrders = validOrders.sort((a, b) => {
+            const dateA = new Date(a.timestamp);
+            const dateB = new Date(b.timestamp);
+            return dateB - dateA; // Mais recentes primeiro
+        });
+        
+        // Mostrar apenas os 10 mais recentes (aumentado de 5 para 10)
+        const recentOrders = sortedOrders.slice(0, 10);
+        
+        console.log('📋 Pedidos recentes encontrados:', recentOrders.length);
+        
+        if (recentOrders.length === 0) {
+            recentOrdersEl.innerHTML = '<p style="text-align: center; color: #666; padding: 1rem;">Nenhum pedido ainda</p>';
+            return;
+        }
+        
+        recentOrdersEl.innerHTML = recentOrders.map(order => `
+            <div class="order-item">
+                <div class="order-id">Pedido #${order.id}</div>
+                <div class="order-customer">${order.cliente || order.customer?.name || 'Cliente'}</div>
+                <div class="order-total">R$ ${order.total.toFixed(2).replace('.', ',')}</div>
+                <div class="order-time">${new Date(order.timestamp).toLocaleString('pt-BR')}</div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar pedidos:', error);
+        const recentOrdersEl = document.getElementById('recentOrders');
+        if (recentOrdersEl) {
+            recentOrdersEl.innerHTML = '<p style="text-align: center; color: #f44336; padding: 1rem;">Erro ao carregar pedidos</p>';
+        }
     }
-    
-    recentOrdersEl.innerHTML = recentOrders.map(order => `
-        <div class="order-item">
-            <div class="order-id">Pedido #${order.id}</div>
-            <div class="order-customer">${order.customer ? order.customer.name : 'Cliente'}</div>
-            <div class="order-total">R$ ${order.total.toFixed(2).replace('.', ',')}</div>
-            <div class="order-time">${new Date(order.timestamp).toLocaleString('pt-BR')}</div>
-        </div>
-    `).join('');
 }
 
 // Sistema de notificações para o administrador
@@ -1428,6 +1580,10 @@ function initializeApp() {
     } else {
         console.error('menuGrid não encontrado!');
     }
+    
+    
+    // Inicializar funcionalidades avançadas
+    initializeAdvancedFeatures();
     
     // Inicializar Firebase em background (sem await)
     initializeFirebase().then(() => {
@@ -1743,6 +1899,312 @@ function showUploadStatus(message, type) {
         }, 3000);
     }
 }
+
+// Função para rolar até o menu
+function scrollToMenu() {
+    const menuSection = document.getElementById('cardapio');
+    if (menuSection) {
+        menuSection.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }
+}
+
+
+
+// Funcionalidades Avançadas
+function initializeAdvancedFeatures() {
+    // Lazy loading de imagens
+    initializeLazyLoading();
+    
+    // Intersection Observer para animações
+    initializeScrollAnimations();
+    
+    // Performance monitoring
+    initializePerformanceMonitoring();
+    
+    // PWA features
+    initializePWA();
+    
+    // Analytics e tracking
+    initializeAnalytics();
+    
+    // Cache management
+    initializeCacheManagement();
+}
+
+// Lazy Loading Avançado
+function initializeLazyLoading() {
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    if (img.dataset.src) {
+                        img.src = img.dataset.src;
+                        img.classList.remove('lazy');
+                        img.classList.add('loaded');
+                        observer.unobserve(img);
+                    }
+                }
+            });
+        }, {
+            rootMargin: '50px 0px',
+            threshold: 0.01
+        });
+
+        document.querySelectorAll('img[data-src]').forEach(img => {
+            imageObserver.observe(img);
+        });
+    }
+}
+
+// Animações de Scroll
+function initializeScrollAnimations() {
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-in');
+                
+                // Animações específicas por elemento
+                if (entry.target.classList.contains('menu-item')) {
+                    entry.target.style.animation = 'slideInFromBottom 0.6s ease-out forwards';
+                } else if (entry.target.classList.contains('feature')) {
+                    entry.target.style.animation = 'slideInFromLeft 0.6s ease-out forwards';
+                } else if (entry.target.classList.contains('contact-item')) {
+                    entry.target.style.animation = 'slideInFromRight 0.6s ease-out forwards';
+                }
+            }
+        });
+    }, observerOptions);
+
+    // Observar elementos
+    document.querySelectorAll('.menu-item, .feature, .contact-item').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        observer.observe(el);
+    });
+}
+
+// Monitoramento de Performance
+function initializePerformanceMonitoring() {
+    // Core Web Vitals
+    if ('web-vitals' in window) {
+        import('https://unpkg.com/web-vitals@3/dist/web-vitals.js').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+            getCLS(console.log);
+            getFID(console.log);
+            getFCP(console.log);
+            getLCP(console.log);
+            getTTFB(console.log);
+        });
+    }
+
+    // Performance timing
+    window.addEventListener('load', () => {
+        const perfData = performance.getEntriesByType('navigation')[0];
+        console.log('Performance:', {
+            loadTime: perfData.loadEventEnd - perfData.loadEventStart,
+            domContentLoaded: perfData.domContentLoadedEventEnd - perfData.domContentLoadedEventStart,
+            firstPaint: performance.getEntriesByType('paint')[0]?.startTime || 'N/A'
+        });
+    });
+}
+
+// PWA Features
+function initializePWA() {
+    // Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('SW registered: ', registration);
+                })
+                .catch(registrationError => {
+                    console.log('SW registration failed: ', registrationError);
+                });
+        });
+    }
+
+    // Install prompt
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Mostrar botão de instalação
+        showInstallButton();
+    });
+
+    function showInstallButton() {
+        const installBtn = document.createElement('button');
+        installBtn.textContent = '📱 Instalar App';
+        installBtn.className = 'install-btn';
+        installBtn.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--coral);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 25px;
+            cursor: pointer;
+            z-index: 1000;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            transition: all 0.3s ease;
+        `;
+        
+        installBtn.addEventListener('click', () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    }
+                    deferredPrompt = null;
+                    installBtn.remove();
+                });
+            }
+        });
+        
+        document.body.appendChild(installBtn);
+    }
+}
+
+// Analytics e Tracking
+function initializeAnalytics() {
+    // Tracking de eventos
+    function trackEvent(eventName, eventData = {}) {
+        console.log('Event tracked:', eventName, eventData);
+        
+        // Aqui você pode integrar com Google Analytics, Facebook Pixel, etc.
+        if (typeof gtag !== 'undefined') {
+            gtag('event', eventName, eventData);
+        }
+    }
+
+    // Tracking de cliques em produtos
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.add-to-cart-btn')) {
+            const productName = e.target.closest('.menu-item').querySelector('.menu-item-name').textContent;
+            trackEvent('add_to_cart', {
+                product_name: productName,
+                value: parseFloat(e.target.closest('.menu-item').querySelector('.menu-item-price').textContent.replace('R$ ', '').replace(',', '.'))
+            });
+        }
+        
+        if (e.target.closest('.cta-button')) {
+            trackEvent('cta_click', {
+                button_text: e.target.textContent.trim()
+            });
+        }
+    });
+
+    // Tracking de scroll
+    let scrollDepth = 0;
+    window.addEventListener('scroll', () => {
+        const newScrollDepth = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
+        if (newScrollDepth > scrollDepth && newScrollDepth % 25 === 0) {
+            trackEvent('scroll_depth', { depth: newScrollDepth });
+            scrollDepth = newScrollDepth;
+        }
+    });
+}
+
+// Cache Management
+function initializeCacheManagement() {
+    // Cache de imagens
+    const imageCache = new Map();
+    
+    function preloadImage(src) {
+        if (imageCache.has(src)) {
+            return Promise.resolve(imageCache.get(src));
+        }
+        
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                imageCache.set(src, img);
+                resolve(img);
+            };
+            img.onerror = reject;
+            img.src = src;
+        });
+    }
+
+    // Preload de imagens críticas
+    const criticalImages = [
+        'logo.svg',
+        'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'
+    ];
+    
+    criticalImages.forEach(src => {
+        preloadImage(src).catch(console.warn);
+    });
+}
+
+// Melhorias de UX
+function enhanceUX() {
+    // Feedback visual para ações
+    function addVisualFeedback(element, type = 'success') {
+        element.classList.add('loading');
+        setTimeout(() => {
+            element.classList.remove('loading');
+            element.classList.add(type);
+            setTimeout(() => element.classList.remove(type), 2000);
+        }, 1000);
+    }
+
+    // Debounce para scroll
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Throttle para resize
+    function throttle(func, limit) {
+        let inThrottle;
+        return function() {
+            const args = arguments;
+            const context = this;
+            if (!inThrottle) {
+                func.apply(context, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        };
+    }
+
+    // Aplicar debounce ao scroll
+    const debouncedScroll = debounce(() => {
+        // Lógica de scroll otimizada
+    }, 10);
+
+    // Aplicar throttle ao resize
+    const throttledResize = throttle(() => {
+        // Lógica de resize otimizada
+    }, 100);
+
+    window.addEventListener('scroll', debouncedScroll);
+    window.addEventListener('resize', throttledResize);
+}
+
+// Inicializar melhorias de UX
+enhanceUX();
 
 // Inicializar quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', initializeApp);
