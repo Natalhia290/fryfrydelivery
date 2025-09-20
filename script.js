@@ -218,7 +218,7 @@ const menuData = {
     bigHots: [
         {
             id: 1,
-            name: "Big Hot de Tilápia + 2 Minis",
+            name: "Big Hot de Tilápia",
             description: "Crocante e gostoso! (De R$ 65,70 por R$ 49,90)",
             price: 49.90,
             emoji: "🍣",
@@ -226,7 +226,7 @@ const menuData = {
         },
         {
             id: 2,
-            name: "Big Hot de Salmão + 2 Minis",
+            name: "Big Hot de Salmão",
             description: "Crocante e gostoso! (De R$ 83,70 por R$ 59,90)",
             price: 59.90,
             emoji: "🍣",
@@ -234,9 +234,9 @@ const menuData = {
         },
         {
             id: 3,
-            name: "Big Hot Turbo",
+            name: "Hot Filadélfia por 15 reais",
             description: "O mais poderoso dos hots! Super recheado e irresistível.",
-            price: 59.90,
+            price: 15.00,
             emoji: "🍣",
             category: "bigHots"
         }

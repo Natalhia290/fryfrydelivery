@@ -147,9 +147,9 @@ function loadMenuData() {
         // Menu padrão
         menuData = {
             bigHots: [
-                { id: 1, name: "Big Hot de Tilápia + 2 Minis", description: "Crocante e gostoso!", price: 49.90, emoji: "🍣", category: "bigHots" },
-                { id: 2, name: "Big Hot de Salmão + 2 Minis", description: "Crocante e gostoso!", price: 59.90, emoji: "🍣", category: "bigHots" },
-                { id: 3, name: "40 Hots Filadélfia", description: "40 irresistíveis e deliciosos hots.", price: 40.00, emoji: "🍣", category: "bigHots" }
+                { id: 1, name: "Big Hot de Tilápia", description: "Crocante e gostoso!", price: 49.90, emoji: "🍣", category: "bigHots" },
+                { id: 2, name: "Big Hot de Salmão", description: "Crocante e gostoso!", price: 59.90, emoji: "🍣", category: "bigHots" },
+                { id: 3, name: "Hot Filadélfia por 15 reais", description: "O mais poderoso dos hots! Super recheado e irresistível.", price: 15.00, emoji: "🍣", category: "bigHots" }
             ],
             miniSushiDog: [
                 { id: 4, name: "Mini Sushi Dog Salmão", description: "Mini hot dog de sushi recheado com salmão", price: 27.90, emoji: "🌭", category: "miniSushiDog" },
