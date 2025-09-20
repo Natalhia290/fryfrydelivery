@@ -1,5 +1,6 @@
 // Script simplificado para carregar dados do painel admin
 console.log('🚀 Script carregado!');
+alert('🚀 Script carregado no Vercel!');
 
 // Dados do cardápio - carregados do painel admin
 let menuData = {};
@@ -179,6 +180,7 @@ function setupSync() {
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 DOM carregado - Iniciando...');
+    alert('🚀 DOM carregado!');
     
     // Carregar dados
     loadMenuData();
@@ -187,6 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupSync();
     
     console.log('✅ Aplicação inicializada!');
+    alert('✅ Aplicação inicializada!');
 });
 
 // Funções globais para admin
