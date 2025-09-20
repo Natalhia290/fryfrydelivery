@@ -1,0 +1,5 @@
+VERCEL DEPLOY FORÇADO - $(Get-Date)
+Mudanças aplicadas:
+- Removido (+ 2 Minis) dos Big Hots
+- Big Hot Turbo alterado para Hot Filadélfia por 15 reais
+- Preço alterado para R$ 15,00

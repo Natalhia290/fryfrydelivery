@@ -140,15 +140,6 @@
                     <button id="addItemBtn" class="btn-primary">+ Adicionar Item</button>
                 </div>
                 
-                <!-- Filtros de Categoria -->
-                <div class="menu-filters">
-                    <button class="filter-btn active" data-category="all">Todos</button>
-                    <button class="filter-btn" data-category="bigHots">Big Hots</button>
-                    <button class="filter-btn" data-category="miniSushiDog">Mini Sushi Dogs</button>
-                    <button class="filter-btn" data-category="sushiRolls">Sushi Rolls</button>
-                    <button class="filter-btn" data-category="bebidas">Bebidas</button>
-                </div>
-                
                 <div class="cardapio-grid" id="cardapioGrid">
                     <!-- Itens do cardápio serão inseridos aqui -->
                 </div>
@@ -232,66 +223,6 @@
             <div class="modal-footer">
                 <button id="saveOrderBtn" class="btn-primary">Salvar</button>
                 <button id="cancelEditBtn" class="btn-secondary">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Gerenciamento de Cardápio -->
-    <div id="menuModal" class="modal">
-        <div class="modal-content menu-modal-content">
-            <div class="modal-header">
-                <h3 id="menuModalTitle">Adicionar Produto</h3>
-                <button id="closeMenuModal" class="close-btn">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="menuForm" class="menu-form">
-                    <div class="form-group">
-                        <label for="productName">Nome do Produto:</label>
-                        <input type="text" id="productName" name="name" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="productDescription">Descrição:</label>
-                        <textarea id="productDescription" name="description" rows="3" required></textarea>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="productPrice">Preço (R$):</label>
-                            <input type="number" id="productPrice" name="price" step="0.01" min="0" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="productEmoji">Emoji:</label>
-                            <input type="text" id="productEmoji" name="emoji" maxlength="2" placeholder="🍣">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="productCategory">Categoria:</label>
-                        <select id="productCategory" name="category" required>
-                            <option value="bigHots">Big Hots</option>
-                            <option value="miniSushiDog">Mini Sushi Dogs</option>
-                            <option value="sushiRolls">Sushi Rolls</option>
-                            <option value="bebidas">Bebidas</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="productImage">URL da Imagem (opcional):</label>
-                        <input type="url" id="productImage" name="image" placeholder="https://exemplo.com/imagem.jpg">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="productAvailable">Disponível:</label>
-                        <input type="checkbox" id="productAvailable" name="available" checked>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button id="saveMenuBtn" class="btn-primary">Salvar</button>
-                <button id="cancelMenuBtn" class="btn-secondary">Cancelar</button>
-                <button id="deleteMenuBtn" class="btn-danger" style="display: none;">Excluir</button>
             </div>
         </div>
     </div>

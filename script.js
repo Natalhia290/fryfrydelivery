@@ -213,7 +213,7 @@ function getProductImage(product) {
     return imageMap[product.id] || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
 }
 
-// Dados dos produtos do cardápio FRY - Atualizado
+// Dados dos produtos do cardápio FRY - VERCEL UPDATE FORÇADO
 const menuData = {
     bigHots: [
         {
