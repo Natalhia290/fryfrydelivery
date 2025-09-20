@@ -14,88 +14,50 @@ const menuGrid = document.getElementById('menuGrid');
 function loadMenuData() {
     console.log('📋 Carregando dados do painel admin...');
     
-    // Verificar se há dados salvos no localStorage
+    // SEMPRE verificar dados do painel admin primeiro
     const savedData = localStorage.getItem('fryMenuData');
     
     if (savedData) {
         try {
-            menuData = JSON.parse(savedData);
-            console.log('✅ Dados carregados do localStorage:', menuData);
+            const parsedData = JSON.parse(savedData);
+            if (parsedData && Object.keys(parsedData).length > 0) {
+                menuData = parsedData;
+                console.log('✅ Dados carregados do painel admin:', menuData);
+                renderMenu();
+                return;
+            }
         } catch (error) {
             console.error('❌ Erro ao carregar dados:', error);
-            menuData = getDefaultData();
         }
-    } else {
-        console.log('📋 Nenhum dado salvo, usando dados padrão');
-        menuData = getDefaultData();
-        // Salvar dados padrão
-        localStorage.setItem('fryMenuData', JSON.stringify(menuData));
     }
     
-    renderMenu();
-}
-
-// Dados padrão corretos
-function getDefaultData() {
-    return {
-        bigHots: [
-            {
-                id: 1,
-                name: "Big Hot de Tilápia",
-                description: "Crocante e gostoso! (De R$ 65,70 por R$ 49,90)",
-                price: 49.90,
-                emoji: "🍣",
-                category: "bigHots"
-            },
-            {
-                id: 2,
-                name: "Big Hot de Salmão",
-                description: "Crocante e gostoso! (De R$ 83,70 por R$ 59,90)",
-                price: 59.90,
-                emoji: "🍣",
-                category: "bigHots"
-            },
-            {
-                id: 3,
-                name: "Hot Filadélfia por 15 reais",
-                description: "O mais poderoso dos hots! Super recheado e irresistível.",
-                price: 15.00,
-                emoji: "🍣",
-                category: "bigHots"
-            }
-        ],
-        miniSushiDog: [
-            {
-                id: 4,
-                name: "Mini Sushi Dog Salmão",
-                description: "Mini hot dog de sushi recheado com salmão",
-                price: 27.90,
-                emoji: "🌭",
-                category: "miniSushiDog"
-            },
-            {
-                id: 5,
-                name: "Mini Sushi Dog Tilápia",
-                description: "Mini hot dog de sushi recheado com tilápia",
-                price: 21.90,
-                emoji: "🌭",
-                category: "miniSushiDog"
-            }
-        ],
-        combos: [
-            {
-                id: 6,
-                name: "Combo Família",
-                description: "2 Big Hots + 4 Mini Sushi Dogs + 2 Acompanhamentos",
-                price: 89.90,
-                emoji: "🍱",
-                category: "combos"
-            }
-        ],
+    // Se não houver dados do painel admin, mostrar mensagem
+    console.log('📋 Nenhum dado do painel admin encontrado');
+    menuData = {
+        bigHots: [],
+        miniSushiDog: [],
+        combos: [],
         bebidas: [],
         adicionais: []
     };
+    
+    renderMenu();
+    showEmptyMenuMessage();
 }
+
+// Mostrar mensagem de cardápio vazio
+function showEmptyMenuMessage() {
+    if (menuGrid) {
+        menuGrid.innerHTML = `
+            <div class="empty-menu">
+                <h3>🍣 Cardápio em Configuração</h3>
+                <p>O cardápio está sendo configurado no painel administrativo.</p>
+                <button onclick="openPedidosPanel()" class="cta-button">Configurar Cardápio</button>
+            </div>
+        `;
+    }
+}
+
 
 // Renderizar menu
 function renderMenu() {
