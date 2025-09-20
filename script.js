@@ -191,6 +191,11 @@ function setupSync() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 DOM carregado - Iniciando...');
     
+    // LIMPAR TUDO E FORÇAR DADOS DO PAINEL ADMIN
+    localStorage.removeItem('fryMenuData');
+    localStorage.removeItem('frySyncData');
+    localStorage.removeItem('fryMenuUpdate');
+    
     // Carregar dados
     loadMenuData();
     
