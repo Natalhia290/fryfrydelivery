@@ -391,7 +391,7 @@ const notificationText = document.getElementById('notificationText');
 
 // Sistema de sincronização em tempo real
 function initializeSync() {
-    // Escutar mudanças do painel admin
+    // Escutar mudanças do painel admin via eventos
     window.addEventListener('menuDataUpdated', function(event) {
         console.log('🔄 Recebendo dados atualizados do painel admin');
         menuData = event.detail.menuData;
@@ -399,13 +399,30 @@ function initializeSync() {
         showNotification('Cardápio atualizado em tempo real!', 'success');
     });
     
+    // Escutar mudanças do localStorage (para outras abas)
+    window.addEventListener('storage', function(event) {
+        if (event.key === 'fryMenuUpdate') {
+            try {
+                const updateData = JSON.parse(event.newValue);
+                if (updateData && updateData.menuData) {
+                    console.log('🔄 Recebendo dados atualizados via localStorage');
+                    menuData = updateData.menuData;
+                    renderMenu();
+                    showNotification('Cardápio atualizado em tempo real!', 'success');
+                }
+            } catch (error) {
+                console.error('❌ Erro ao processar dados do localStorage:', error);
+            }
+        }
+    });
+    
     // Verificar dados de sincronização no localStorage
-    const syncData = localStorage.getItem('frySyncData');
-    if (syncData) {
+    const savedMenu = localStorage.getItem('fryMenuData');
+    if (savedMenu) {
         try {
-            const parsed = JSON.parse(syncData);
-            if (parsed.menuData) {
-                menuData = parsed.menuData;
+            const parsed = JSON.parse(savedMenu);
+            if (parsed) {
+                menuData = parsed;
                 console.log('📋 Dados sincronizados carregados do localStorage');
                 renderMenu();
             }

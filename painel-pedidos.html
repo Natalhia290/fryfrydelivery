@@ -1697,28 +1697,18 @@
         // Carregar dados do cardápio sincronizado
         async function loadMenuData() {
             try {
-                // Carregar dados do script.js principal
-                const scriptResponse = await fetch('script.js');
-                const scriptText = await scriptResponse.text();
-                
-                // Extrair menuData do script.js usando regex
-                const menuDataMatch = scriptText.match(/const menuData = ({[\s\S]*?});/);
-                if (menuDataMatch) {
-                    // Converter string para objeto JavaScript
-                    const menuDataString = menuDataMatch[1];
-                    // Substituir aspas simples por duplas para JSON válido
-                    const jsonString = menuDataString
-                        .replace(/'/g, '"')
-                        .replace(/(\w+):/g, '"$1":')
-                        .replace(/,(\s*[}\]])/g, '$1');
-                    
-                    menuData = JSON.parse(jsonString);
-                    console.log('📋 Cardápio sincronizado do script.js');
-                } else {
-                    // Fallback para dados padrão
-                    menuData = getDefaultMenuData();
-                    console.log('📋 Usando dados padrão');
+                // Primeiro, tentar carregar do localStorage (dados mais recentes)
+                const savedMenu = localStorage.getItem('fryMenuData');
+                if (savedMenu) {
+                    menuData = JSON.parse(savedMenu);
+                    console.log('📋 Cardápio carregado do localStorage');
+                    renderMenuCategories();
+                    return;
                 }
+                
+                // Se não houver dados salvos, usar dados padrão
+                menuData = getDefaultMenuData();
+                console.log('📋 Usando dados padrão');
                 
                 // Salvar no localStorage para sincronização
                 localStorage.setItem('fryMenuData', JSON.stringify(menuData));
@@ -1861,7 +1851,10 @@
         // Sincronizar com o site principal
         async function syncWithMainSite() {
             try {
-                // Criar um arquivo de sincronização
+                // Salvar dados no localStorage principal
+                localStorage.setItem('fryMenuData', JSON.stringify(menuData));
+                
+                // Criar dados de sincronização
                 const syncData = {
                     timestamp: new Date().toISOString(),
                     menuData: menuData,
@@ -1871,9 +1864,21 @@
                 // Salvar dados de sincronização
                 localStorage.setItem('frySyncData', JSON.stringify(syncData));
                 
-                // Disparar evento de sincronização
-                window.dispatchEvent(new CustomEvent('menuDataUpdated', {
-                    detail: { menuData: menuData }
+                // Disparar evento de sincronização para todas as abas
+                const event = new CustomEvent('menuDataUpdated', {
+                    detail: { 
+                        menuData: menuData,
+                        timestamp: new Date().toISOString()
+                    }
+                });
+                
+                // Disparar evento na janela atual
+                window.dispatchEvent(event);
+                
+                // Disparar evento para outras abas via localStorage
+                localStorage.setItem('fryMenuUpdate', JSON.stringify({
+                    menuData: menuData,
+                    timestamp: new Date().toISOString()
                 }));
                 
                 console.log('🔄 Dados sincronizados com o site principal');
@@ -1934,11 +1939,23 @@
         // Sincronização forçada
         function forceSync() {
             showNotification('Sincronizando dados...', 'info');
-            loadMenuData().then(() => {
+            
+            // Forçar sincronização
+            syncWithMainSite().then(() => {
                 showNotification('Dados sincronizados com sucesso!', 'success');
-            }).catch(() => {
+                console.log('🔄 Sincronização forçada concluída');
+            }).catch((error) => {
+                console.error('❌ Erro na sincronização forçada:', error);
                 showNotification('Erro na sincronização', 'error');
             });
+        }
+
+        // Função de debug para verificar sincronização
+        function debugSync() {
+            console.log('🔍 DEBUG - Dados atuais do menuData:', menuData);
+            console.log('🔍 DEBUG - localStorage fryMenuData:', localStorage.getItem('fryMenuData'));
+            console.log('🔍 DEBUG - localStorage frySyncData:', localStorage.getItem('frySyncData'));
+            console.log('🔍 DEBUG - localStorage fryMenuUpdate:', localStorage.getItem('fryMenuUpdate'));
         }
 
         // Fechar modal ao clicar fora
