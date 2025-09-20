@@ -4,6 +4,9 @@ console.log('🚀 Script carregado!');
 // Dados do cardápio - carregados do painel admin
 let menuData = {};
 
+// Sistema de imagens personalizadas
+let productImages = {};
+
 // Elementos DOM
 const menuGrid = document.getElementById('menuGrid');
 
@@ -125,9 +128,16 @@ function renderMenu() {
 function createProductCard(product) {
     const card = document.createElement('div');
     card.className = 'menu-item';
+    
+    // Verificar se tem imagem personalizada
+    const productImage = getProductImage(product);
+    
     card.innerHTML = `
         <div class="menu-item-image">
-            <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="${product.name}" loading="lazy">
+            ${productImage ? 
+                `<img src="${productImage}" alt="${product.name}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\"no-image\\">SEM IMAGEM</div>'">` :
+                `<div class="no-image">SEM IMAGEM</div>`
+            }
         </div>
         <div class="menu-item-content">
             <h3 class="menu-item-name">${product.emoji} ${product.name}</h3>
@@ -141,6 +151,45 @@ function createProductCard(product) {
         </div>
     `;
     return card;
+}
+
+// Função para obter imagem do produto
+function getProductImage(product) {
+    // Primeiro verifica se há imagem personalizada
+    if (productImages[product.id]) {
+        return productImages[product.id];
+    }
+    
+    // Verificar se há imagem salva no localStorage
+    const savedImage = localStorage.getItem(`product_image_${product.id}`);
+    if (savedImage) {
+        productImages[product.id] = savedImage;
+        return savedImage;
+    }
+    
+    // Se não houver imagem personalizada, retorna null para mostrar "SEM IMAGEM"
+    return null;
+}
+
+// Função para salvar imagem do produto
+function saveProductImage(productId, imageData) {
+    productImages[productId] = imageData;
+    localStorage.setItem(`product_image_${productId}`, imageData);
+    console.log(`✅ Imagem salva para produto ${productId}`);
+}
+
+// Função para upload de imagem (será chamada pelo painel admin)
+function uploadProductImage(productId, file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imageData = e.target.result;
+            saveProductImage(productId, imageData);
+            resolve(imageData);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 }
 
 // Adicionar ao carrinho
